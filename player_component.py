@@ -27,9 +27,9 @@ def render_player_html(
         
     duration_str = format_time(duration_seconds)
     
-    # Normal Python string to avoid f-string brace escaping syntax issues.
+    # Raw string to avoid f-string brace escaping AND invalid escape sequence warnings.
     # We will use .replace() for all key template variables.
-    html_template = """<!DOCTYPE html>
+    html_template = r"""<!DOCTYPE html>
 <html lang="en" class="h-full">
 <head>
     <meta charset="UTF-8">
@@ -688,8 +688,9 @@ def render_player_html(
             player.setVolume(lastVolume);
             document.getElementById('volume-slider').value = lastVolume;
             
-            // Autoplay immediately when loaded inside queue
-            player.playVideo();
+            // NOTE: Browsers block autoplay inside iframes without a direct user gesture.
+            // We do NOT call player.playVideo() here — user must click play.
+            // Removing the silent-fail autoplay is what makes the player actually work.
             
             setTimeout(() => {
                 const duration = player.getDuration();
@@ -698,7 +699,13 @@ def render_player_html(
                     document.getElementById('progress-bar').max = duration;
                     document.getElementById('time-total').innerText = formatTime(duration);
                 }
-            }, 1000);
+                // Pulse the play button to signal the player is ready
+                const playBtn = document.getElementById('play-pause-btn');
+                if (playBtn) {
+                    playBtn.classList.add('animate-pulse');
+                    setTimeout(() => playBtn.classList.remove('animate-pulse'), 2000);
+                }
+            }, 800);
         }
         
         function onPlayerStateChange(event) {
