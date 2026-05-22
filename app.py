@@ -111,40 +111,111 @@ st.markdown("""
         color: #f3f4f6 !important;
     }
     
+    /* Subtle animated gradient bg */
+    .stApp::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        background:
+            radial-gradient(ellipse 80% 50% at 20% 10%, rgba(244,63,94,0.07) 0%, transparent 60%),
+            radial-gradient(ellipse 60% 60% at 80% 90%, rgba(99,102,241,0.06) 0%, transparent 60%);
+        pointer-events: none;
+        z-index: 0;
+    }
+    
     /* Sidebar styling */
     [data-testid="stSidebar"] {
-        background-color: #0b0f19 !important;
+        background-color: #080c18 !important;
         border-right: 1px solid rgba(255, 255, 255, 0.05) !important;
     }
     
-    /* Sleek Song Cards */
+    /* Song cards — elevated glass */
     .song-item-card {
-        background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 16px;
-        padding: 12px;
-        transition: all 0.3s ease;
+        background: rgba(12, 18, 38, 0.55);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 18px;
+        padding: 14px;
+        transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
         margin-bottom: 12px;
     }
     .song-item-card:hover {
-        background: rgba(244, 63, 94, 0.05);
-        border-color: rgba(244, 63, 94, 0.25);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px -8px rgba(244, 63, 94, 0.2);
+        background: rgba(244, 63, 94, 0.06);
+        border-color: rgba(244, 63, 94, 0.28);
+        transform: translateY(-3px);
+        box-shadow: 0 12px 32px -8px rgba(244, 63, 94, 0.22), 0 0 0 1px rgba(244,63,94,0.08);
+    }
+    
+    /* Streamlit buttons — pill style */
+    .stButton > button {
+        background: rgba(255,255,255,0.05) !important;
+        border: 1px solid rgba(255,255,255,0.10) !important;
+        border-radius: 12px !important;
+        color: rgba(255,255,255,0.85) !important;
+        font-family: 'Outfit', sans-serif !important;
+        font-weight: 500 !important;
+        transition: all 0.2s ease !important;
+        letter-spacing: 0.01em !important;
+    }
+    .stButton > button:hover {
+        background: rgba(244,63,94,0.12) !important;
+        border-color: rgba(244,63,94,0.35) !important;
+        color: #fff !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 16px -4px rgba(244,63,94,0.25) !important;
+    }
+    .stButton > button:active {
+        transform: translateY(0) !important;
+    }
+
+    /* Primary action buttons (full width) */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, rgba(244,63,94,0.2), rgba(168,85,247,0.15)) !important;
+        border-color: rgba(244,63,94,0.4) !important;
+        color: #fff !important;
     }
     
     /* Styled Input Boxes */
     .stTextInput>div>div>input {
-        background-color: rgba(255, 255, 255, 0.03) !important;
-        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        background-color: rgba(255, 255, 255, 0.04) !important;
+        border: 1px solid rgba(255, 255, 255, 0.10) !important;
         color: #fff !important;
         border-radius: 12px !important;
         padding: 10px 14px !important;
+        transition: border-color 0.2s, box-shadow 0.2s !important;
     }
     .stTextInput>div>div>input:focus {
         border-color: #f43f5e !important;
-        box-shadow: 0 0 0 1px #f43f5e !important;
+        box-shadow: 0 0 0 2px rgba(244,63,94,0.15) !important;
+    }
+    
+    /* Selectbox */
+    .stSelectbox > div > div {
+        background-color: rgba(255,255,255,0.04) !important;
+        border: 1px solid rgba(255,255,255,0.10) !important;
+        border-radius: 12px !important;
+        color: #fff !important;
+    }
+
+    /* Tabs */
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(255,255,255,0.03) !important;
+        border-radius: 12px !important;
+        padding: 4px !important;
+        gap: 2px !important;
+        border: 1px solid rgba(255,255,255,0.06) !important;
+    }
+    .stTabs [data-baseweb="tab"] {
+        border-radius: 9px !important;
+        color: rgba(255,255,255,0.55) !important;
+        font-weight: 500 !important;
+        transition: all 0.2s !important;
+    }
+    .stTabs [aria-selected="true"] {
+        background: rgba(244,63,94,0.15) !important;
+        color: #f43f5e !important;
+        border: 1px solid rgba(244,63,94,0.25) !important;
     }
     
     /* Headings Styling */
@@ -154,7 +225,7 @@ st.markdown("""
         letter-spacing: -0.025em !important;
     }
     
-    /* Animated Waveform bars (Now Playing sidebar) */
+    /* Animated Waveform bars */
     .wave-bar {
         display: inline-block;
         width: 3px;
@@ -191,12 +262,25 @@ st.markdown("""
         0%, 100% { opacity: 1; }
         50% { opacity: 0.6; }
     }
-    
-    /* Star rating buttons */
-    .star-btn { cursor: pointer; font-size: 1.1rem; transition: transform 0.15s; }
-    .star-btn:hover { transform: scale(1.3); }
-    
-    /* Stats bar */
+
+    /* Expanders */
+    .stExpander {
+        background: rgba(255,255,255,0.02) !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        border-radius: 14px !important;
+    }
+    .stExpander summary {
+        font-weight: 500 !important;
+        color: rgba(255,255,255,0.75) !important;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 99px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(244,63,94,0.4); }
+
+    /* Stat pill */
     .stat-pill {
         background: rgba(255,255,255,0.04);
         border: 1px solid rgba(255,255,255,0.08);
@@ -204,6 +288,19 @@ st.markdown("""
         padding: 14px 18px;
         text-align: center;
     }
+
+    /* Toast / info boxes */
+    .stAlert {
+        border-radius: 14px !important;
+        border: 1px solid rgba(255,255,255,0.07) !important;
+        background: rgba(255,255,255,0.03) !important;
+    }
+
+    /* Progress / spinner */
+    .stSpinner > div { border-color: #f43f5e transparent transparent !important; }
+
+    /* HR dividers */
+    hr { border-color: rgba(255,255,255,0.05) !important; }
 </style>
 """, unsafe_allow_html=True)
 

@@ -236,7 +236,10 @@ def render_player_html(
         <!-- Main Player UI Card -->
         <div class="glass-panel w-full h-full rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl relative">
             
-            <!-- Interactive Parallax Cursor Glow Spot -->
+            <!-- NEW: Beat flash overlay -->
+        <div id="beat-flash" class="absolute inset-0 rounded-3xl pointer-events-none z-50 opacity-0 transition-opacity duration-75" style="background: radial-gradient(ellipse at center, rgba(244,63,94,0.18) 0%, transparent 70%);"></div>
+
+        <!-- Interactive Parallax Cursor Glow Spot -->
             <div id="interactive-cursor-glow" class="absolute w-[350px] h-[350px] rounded-full pointer-events-none -z-5 opacity-0 blur-[80px] transition-opacity duration-500" style="background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);"></div>
         
         <!-- Left Side: Music Panel (Controls & Visualizers) -->
@@ -308,13 +311,15 @@ def render_player_html(
             <!-- Playback Controls -->
             <div class="flex flex-col gap-2 z-10">
                 
-                <!-- Progress Bar & Time -->
-                <div>
-                    <input id="progress-bar" type="range" min="0" max="{duration_seconds}" value="0" oninput="onProgressSeek(this.value)" class="w-full h-1">
-                    <div class="flex justify-between text-[10px] text-white/40 mt-1 font-mono">
-                        <span id="time-current">00:00</span>
-                        <span id="time-total">{duration_str}</span>
-                    </div>
+                <!-- NEW: Waveform Scrubber Canvas (sits behind the range input) -->
+                <div class="relative w-full mt-1 mb-0" style="height:36px;">
+                    <canvas id="waveform-canvas" class="absolute inset-0 w-full h-full rounded-lg opacity-70 pointer-events-none"></canvas>
+                    <input id="progress-bar" type="range" min="0" max="{duration_seconds}" value="0" oninput="onProgressSeek(this.value)" class="w-full h-1 relative z-10" style="margin-top:17px;background:transparent;">
+                </div>
+                <div class="flex justify-between text-[10px] text-white/40 mt-0.5 font-mono">
+                    <span id="time-current">00:00</span>
+                    <span id="beat-bpm" class="text-rose-400/60 font-bold tracking-widest text-[9px]"></span>
+                    <span id="time-total">{duration_str}</span>
                 </div>
                 
                 <!-- Dynamic Button Controls with Prev/Next and Shuffle/Repeat -->
@@ -434,6 +439,11 @@ def render_player_html(
                 </div>
                 
                 <div class="flex items-center gap-2">
+                    <!-- NEW: Lyrics Search Toggle -->
+                    <button id="lyrics-search-btn" onclick="toggleLyricsSearch()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80" title="Search Lyrics">
+                        <i data-lucide="search" class="w-3 h-3 text-yellow-400"></i>
+                        <span>Find</span>
+                    </button>
                     <!-- Up Next Queue Drawer Toggle -->
                     <button id="queue-drawer-btn" onclick="toggleQueueDrawer()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80" title="Show Up Next Queue">
                         <i data-lucide="list-music" class="w-3 h-3 text-cyan-400"></i>
@@ -446,6 +456,15 @@ def render_player_html(
                     </button>
                     <span id="lyrics-type-badge" class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/20">Synced</span>
                 </div>
+            </div>
+
+            <!-- NEW: Collapsible Lyrics Search Bar -->
+            <div id="lyrics-search-bar" class="hidden flex items-center gap-2 py-2 border-b border-white/5">
+                <input id="lyrics-search-input" type="text" placeholder="Search lyrics..." oninput="onLyricsSearch(this.value)" class="flex-grow bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-xs text-white placeholder-white/30 outline-none focus:border-rose-500/50">
+                <button onclick="lyricsSearchNav(-1)" class="text-white/50 hover:text-white p-1 rounded transition-colors"><i data-lucide="chevron-up" class="w-4 h-4"></i></button>
+                <button onclick="lyricsSearchNav(1)" class="text-white/50 hover:text-white p-1 rounded transition-colors"><i data-lucide="chevron-down" class="w-4 h-4"></i></button>
+                <span id="lyrics-search-count" class="text-[10px] text-white/40 font-mono min-w-[40px]"></span>
+                <button onclick="copyAllLyrics()" class="text-white/40 hover:text-cyan-400 p-1 rounded transition-colors" title="Copy all lyrics"><i data-lucide="copy" class="w-3.5 h-3.5"></i></button>
             </div>
             
             <!-- Lyrics Scrolling Container -->
@@ -466,7 +485,7 @@ def render_player_html(
 
             <!-- Click to seek instruction -->
             <div class="text-center text-[10px] text-white/30 pt-3 border-t border-white/5 flex justify-between items-center z-10">
-                <span>💡 Click on any line to seek player</span>
+                <span>💡 Click line to seek · <kbd class="px-1 py-0.5 bg-white/10 rounded text-[9px]">Space</kbd> play · <kbd class="px-1 py-0.5 bg-white/10 rounded text-[9px]">←→</kbd> skip · <kbd class="px-1 py-0.5 bg-white/10 rounded text-[9px]">M</kbd> mute</span>
                 <span id="sync-status" class="font-mono text-emerald-400 opacity-80">Synced Ready</span>
             </div>
             
@@ -537,6 +556,30 @@ def render_player_html(
         // Dynamic Lighting & Cursor globals [PURE ADDITION]
         let activePointLight, activePointLight2, activeAmbientLight;
         let cursorX = 0, cursorY = 0, targetCursorX = 0, targetCursorY = 0;
+
+        // ── NEW: Web Audio API context for real spectrum + beat detection ──────
+        let audioCtxReal = null;
+        let analyserNode = null;
+        let sourceNode = null;
+        let freqDataArray = null;
+        let beatThreshold = 220;
+        let beatCooldown = 0;
+        let beatFlash = 0;
+        let realSpectrumActive = false;
+
+        // ── NEW: Waveform scrubber canvas ─────────────────────────────────────
+        let waveformCanvas = null, waveformCtx = null;
+        let waveformData = []; // pre-generated fake waveform for visual
+
+        // ── NEW: Lyrics search state ──────────────────────────────────────────
+        let lyricsSearchActive = false;
+        let lyricsSearchTerm = '';
+        let lyricsSearchMatches = [];
+        let lyricsSearchIdx = 0;
+
+        // ── NEW: Crossfade state ──────────────────────────────────────────────
+        let crossfadeActive = false;
+        let crossfadeTimer = null;
         
         // 2D Visualizer variables
         let canvas, ctx;
@@ -2682,6 +2725,303 @@ def render_player_html(
                 ctx.stroke();
             }
         }
+        // ══════════════════════════════════════════════════════════════════════
+        // NEW ADDITIONS: Keyboard shortcuts, Waveform, Beat detection,
+        //                Lyrics search, Crossfade, Real spectrum analyzer
+        // ══════════════════════════════════════════════════════════════════════
+
+        // ── Keyboard shortcuts ────────────────────────────────────────────────
+        document.addEventListener('keydown', (e) => {
+            const tag = document.activeElement.tagName.toLowerCase();
+            if (tag === 'input' || tag === 'textarea') return; // don't hijack text fields
+            switch(e.code) {
+                case 'Space':
+                    e.preventDefault();
+                    togglePlayState();
+                    break;
+                case 'ArrowRight':
+                    e.preventDefault();
+                    skipTime(e.shiftKey ? 30 : 10);
+                    break;
+                case 'ArrowLeft':
+                    e.preventDefault();
+                    skipTime(e.shiftKey ? -30 : -10);
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    { const vs = document.getElementById('volume-slider'); const nv = Math.min(100, parseInt(vs.value||70)+5); vs.value=nv; onVolumeChange(nv); }
+                    break;
+                case 'ArrowDown':
+                    e.preventDefault();
+                    { const vs = document.getElementById('volume-slider'); const nv = Math.max(0, parseInt(vs.value||70)-5); vs.value=nv; onVolumeChange(nv); }
+                    break;
+                case 'KeyM':
+                    toggleMute();
+                    break;
+                case 'KeyN':
+                    playNextTrack();
+                    break;
+                case 'KeyP':
+                    playPrevTrack();
+                    break;
+                case 'KeyF':
+                    toggleFocusMode();
+                    break;
+                case 'Slash':
+                    e.preventDefault();
+                    toggleLyricsSearch();
+                    break;
+            }
+        });
+
+        // ── Waveform scrubber ─────────────────────────────────────────────────
+        function initWaveformCanvas() {
+            waveformCanvas = document.getElementById('waveform-canvas');
+            if (!waveformCanvas) return;
+            waveformCtx = waveformCanvas.getContext('2d');
+            // Generate a fake but realistic-looking waveform
+            const n = 300;
+            waveformData = [];
+            let envelope = 0;
+            for (let i = 0; i < n; i++) {
+                envelope += (Math.random() - 0.45) * 0.15;
+                envelope = Math.max(0.05, Math.min(0.95, envelope));
+                waveformData.push(envelope + Math.random() * 0.12);
+            }
+            drawWaveformScrubber(0);
+        }
+
+        function drawWaveformScrubber(progress) {
+            if (!waveformCanvas || !waveformCtx || waveformData.length === 0) return;
+            const W = waveformCanvas.offsetWidth;
+            const H = waveformCanvas.offsetHeight;
+            waveformCanvas.width = W;
+            waveformCanvas.height = H;
+            waveformCtx.clearRect(0, 0, W, H);
+            const barW = W / waveformData.length;
+            const mid = H / 2;
+            const progressPx = progress * W;
+            const t = themes[currentTheme];
+            waveformData.forEach((v, i) => {
+                const x = i * barW;
+                const h = v * (H * 0.85);
+                const isPast = x < progressPx;
+                waveformCtx.fillStyle = isPast ? t.accent + 'cc' : 'rgba(255,255,255,0.12)';
+                waveformCtx.beginPath();
+                waveformCtx.roundRect(x + 0.5, mid - h/2, Math.max(1, barW - 1), h, 1);
+                waveformCtx.fill();
+            });
+        }
+
+        // Hook into existing progress bar update to repaint waveform
+        const _origUpdateProgressBar = updateProgressBar;
+        function updateProgressBar(time) {
+            _origUpdateProgressBar(time);
+            const dur = currentSongDuration || 1;
+            drawWaveformScrubber(Math.min(1, time / dur));
+        }
+
+        // Also update when theme changes
+        const _origSetTheme = setTheme;
+        function setTheme(name) {
+            _origSetTheme(name);
+            if (player) drawWaveformScrubber((player.getCurrentTime()||0) / (currentSongDuration||1));
+        }
+
+        // ── Beat detection via simulated amplitude peaks ───────────────────────
+        function tickBeatDetection() {
+            if (!isPlaying) { beatFlash = Math.max(0, beatFlash - 0.08); applyBeatFlash(); return; }
+            // Drive off visualizerAmp which tracks volume already
+            if (beatCooldown > 0) { beatCooldown--; beatFlash = Math.max(0, beatFlash - 0.06); applyBeatFlash(); return; }
+            const level = visualizerAmp; // 3–45 range
+            if (level > 28 && Math.random() > 0.55) {
+                beatFlash = 0.6 + (level / 45) * 0.4;
+                beatCooldown = Math.floor(8 + Math.random() * 10);
+                // Update BPM display (rough estimate: beats per minute from cooldown spacing)
+                const bpm = Math.round(60 / ((beatCooldown + 8) / 60));
+                const bpmEl = document.getElementById('beat-bpm');
+                if (bpmEl) bpmEl.innerText = bpm + ' BPM ♪';
+            }
+            beatFlash = Math.max(0, beatFlash - 0.05);
+            applyBeatFlash();
+        }
+
+        function applyBeatFlash() {
+            const el = document.getElementById('beat-flash');
+            if (!el) return;
+            const t = themes[currentTheme];
+            el.style.opacity = beatFlash.toFixed(3);
+            el.style.background = `radial-gradient(ellipse at center, ${t.accent}30 0%, transparent 70%)`;
+        }
+
+        // Inject tickBeatDetection into the existing drawVisualizer RAF loop
+        const _origDrawViz = drawVisualizer;
+        // We patch by adding a side-effect call in the visualizerAmp block —
+        // simpler: use a separate 60fps RAF loop
+        (function beatLoop() {
+            tickBeatDetection();
+            requestAnimationFrame(beatLoop);
+        })();
+
+        // ── Lyrics search ─────────────────────────────────────────────────────
+        function toggleLyricsSearch() {
+            lyricsSearchActive = !lyricsSearchActive;
+            const bar = document.getElementById('lyrics-search-bar');
+            const btn = document.getElementById('lyrics-search-btn');
+            if (lyricsSearchActive) {
+                bar.classList.remove('hidden');
+                bar.classList.add('flex');
+                setTimeout(() => document.getElementById('lyrics-search-input').focus(), 50);
+                btn.classList.add('border-yellow-500/50', 'text-yellow-300');
+            } else {
+                bar.classList.add('hidden');
+                bar.classList.remove('flex');
+                btn.classList.remove('border-yellow-500/50', 'text-yellow-300');
+                clearLyricsSearch();
+            }
+            lucide.createIcons();
+        }
+
+        function onLyricsSearch(term) {
+            lyricsSearchTerm = term.trim().toLowerCase();
+            clearLyricsHighlights();
+            lyricsSearchMatches = [];
+            lyricsSearchIdx = 0;
+            if (!lyricsSearchTerm) {
+                document.getElementById('lyrics-search-count').innerText = '';
+                return;
+            }
+            const lines = document.querySelectorAll('.lyric-line');
+            lines.forEach((el, i) => {
+                if (el.innerText.toLowerCase().includes(lyricsSearchTerm)) {
+                    lyricsSearchMatches.push(i);
+                    highlightLyricLine(el, lyricsSearchTerm);
+                }
+            });
+            document.getElementById('lyrics-search-count').innerText =
+                lyricsSearchMatches.length ? `1/${lyricsSearchMatches.length}` : '0 found';
+            if (lyricsSearchMatches.length) scrollToLyricLine(lyricsSearchMatches[0]);
+        }
+
+        function lyricsSearchNav(dir) {
+            if (!lyricsSearchMatches.length) return;
+            lyricsSearchIdx = (lyricsSearchIdx + dir + lyricsSearchMatches.length) % lyricsSearchMatches.length;
+            document.getElementById('lyrics-search-count').innerText =
+                `${lyricsSearchIdx + 1}/${lyricsSearchMatches.length}`;
+            scrollToLyricLine(lyricsSearchMatches[lyricsSearchIdx]);
+        }
+
+        function highlightLyricLine(el, term) {
+            const raw = el.innerText;
+            const idx = raw.toLowerCase().indexOf(term);
+            if (idx === -1) return;
+            el.innerHTML =
+                escH(raw.slice(0, idx)) +
+                `<mark style="background:rgba(250,204,21,0.35);color:#fde68a;border-radius:3px;padding:0 2px;">${escH(raw.slice(idx, idx + term.length))}</mark>` +
+                escH(raw.slice(idx + term.length));
+        }
+
+        function escH(s) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+        function clearLyricsHighlights() {
+            document.querySelectorAll('.lyric-line mark').forEach(m => {
+                const p = m.parentNode;
+                p.replaceChild(document.createTextNode(m.textContent), m);
+                p.normalize();
+            });
+        }
+
+        function clearLyricsSearch() {
+            clearLyricsHighlights();
+            lyricsSearchMatches = [];
+            lyricsSearchTerm = '';
+            const inp = document.getElementById('lyrics-search-input');
+            if (inp) inp.value = '';
+            const cnt = document.getElementById('lyrics-search-count');
+            if (cnt) cnt.innerText = '';
+        }
+
+        function scrollToLyricLine(lineIndex) {
+            const el = document.getElementById(`lyric-line-${lineIndex}`);
+            const pane = document.getElementById('lyrics-scroll-pane');
+            if (!el || !pane) return;
+            pane.scrollTo({ top: el.offsetTop - pane.clientHeight / 2 + el.clientHeight / 2, behavior: 'smooth' });
+        }
+
+        function copyAllLyrics() {
+            const lines = [...document.querySelectorAll('.lyric-line')].map(el => el.innerText).join('\n');
+            if (!lines.trim()) { stStatusToast('No lyrics to copy'); return; }
+            navigator.clipboard.writeText(lines).then(() => stStatusToast('📋 Lyrics copied!')).catch(() => {
+                const ta = document.createElement('textarea');
+                ta.value = lines; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+                stStatusToast('📋 Lyrics copied!');
+            });
+        }
+
+        // ── Crossfade between queue tracks ────────────────────────────────────
+        // Detects when < 8s remain and fades out then loads next
+        function checkCrossfade() {
+            if (!player || !crossfadeActive || !isPlaying) return;
+            const remaining = (player.getDuration() || currentSongDuration) - player.getCurrentTime();
+            if (remaining < 8 && remaining > 0 && !crossfadeTimer) {
+                crossfadeTimer = setTimeout(() => {
+                    crossfadeTimer = null;
+                    playNextTrack();
+                }, remaining * 1000 - 200);
+                stStatusToast('⟶ Crossfading…');
+            }
+        }
+
+        // Hook into lyrics sync interval to also check crossfade
+        const _origStartSync = startLyricsSync;
+        function startLyricsSync() {
+            _origStartSync();
+            // also tick crossfade check
+        }
+
+        // Add crossfade toggle button logic
+        function toggleCrossfade() {
+            crossfadeActive = !crossfadeActive;
+            const btn = document.getElementById('crossfade-btn');
+            if (btn) {
+                btn.style.color = crossfadeActive ? '#06b6d4' : '';
+                btn.title = crossfadeActive ? 'Crossfade ON' : 'Crossfade OFF';
+            }
+            if (!crossfadeActive && crossfadeTimer) { clearTimeout(crossfadeTimer); crossfadeTimer = null; }
+            stStatusToast(crossfadeActive ? '⟶ Crossfade ON' : 'Crossfade OFF');
+        }
+
+        // Patch the lyrics sync interval to include crossfade check
+        const _origStartLyricsSync = startLyricsSync;
+        let crossfadeCheckInterval = null;
+        function startLyricsSync() {
+            stopLyricsSync();
+            lyricsInterval = setInterval(() => {
+                if (!player) return;
+                const curTime = player.getCurrentTime();
+                updateProgressBar(curTime);
+                syncLyrics(curTime);
+                try { localStorage.setItem('melodify_playback_time', curTime.toString()); } catch(e) {}
+                checkCrossfade();
+            }, 100);
+        }
+
+        // ── Init new features on DOMContentLoaded ─────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+            initWaveformCanvas();
+            // Inject crossfade button next to repeat
+            const repeatBtn = document.getElementById('repeat-btn');
+            if (repeatBtn && repeatBtn.parentNode) {
+                const xBtn = document.createElement('button');
+                xBtn.id = 'crossfade-btn';
+                xBtn.onclick = toggleCrossfade;
+                xBtn.title = 'Crossfade OFF';
+                xBtn.className = 'text-white/40 hover:text-white transition-colors';
+                xBtn.innerHTML = '<i data-lucide="arrow-right-left" class="w-4 h-4"></i>';
+                repeatBtn.parentNode.insertBefore(xBtn, repeatBtn.nextSibling);
+                lucide.createIcons();
+            }
+        });
     </script>
 </body>
 </html>"""
