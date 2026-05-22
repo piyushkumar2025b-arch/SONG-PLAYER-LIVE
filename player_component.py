@@ -614,8 +614,20 @@ def render_player_html(
         // 2. Initialize App
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
-            // Immediately render whatever Python injected — never show blank/spinner on load
-            buildLyricsUI();
+            // If Python already has lyrics, show them immediately
+            // Otherwise kick off client-side fetch right away (Python API calls are blocked server-side)
+            if (lyricsData && lyricsData.length > 0) {
+                buildLyricsUI();
+            } else {
+                // Show loading spinner and immediately fetch from browser (lrclib.net works client-side)
+                document.getElementById('lyrics-scroll-pane').innerHTML = `
+                    <div class="text-white/40 text-sm py-12 flex flex-col items-center justify-center">
+                        <div class="animate-spin w-6 h-6 border-2 border-t-rose-500 border-white/20 rounded-full mb-2"></div>
+                        Loading lyrics...
+                    </div>
+                `;
+                fetchLyricsFromAPI(currentSongTitle, currentSongArtist, currentSongDuration);
+            }
             initVisualizer();
             initThreeJS();
             setTheme('rose');
@@ -985,6 +997,7 @@ def render_player_html(
                     buildLyricsUI();
                 }
             }, 8000);
+        }  // end fetchLyricsFromAPI
         
         function fetchPlainLyricsFallback(title, artist, rawTitle, duration) {
             // Lyrics.ovh — try multiple title/artist combos
