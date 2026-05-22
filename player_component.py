@@ -445,8 +445,7 @@ def render_player_html(
             </div>
             
             <!-- Lyrics Scrolling Container -->
-            <div id="lyrics-scroll-pane" class="lyrics-container flex-grow overflow-y-auto py-32 px-4 space-y-6 scroll-smooth text-center md:text-left flex flex-col">
-                <div class="text-white/40 text-sm py-12">Loading lyrics database...</div>
+            <div id="lyrics-scroll-pane" class="lyrics-container flex-grow overflow-y-auto py-4 px-4 space-y-1 scroll-smooth text-center md:text-left flex flex-col">
             </div>
             
             <!-- Floating Spotify Lyric Effects selector (Hidden by default, shown in focus mode) -->
@@ -611,6 +610,7 @@ def render_player_html(
         // 2. Initialize App
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
+            // Immediately render whatever Python injected — never show blank/spinner on load
             buildLyricsUI();
             initVisualizer();
             initThreeJS();
@@ -826,6 +826,16 @@ def render_player_html(
             // Query public API in background from Javascript! (Mind-blowing client independence)
             fetchLyricsFromAPI(currentSongTitle, currentSongArtist, currentSongDuration);
             buildQueueDrawerUI();
+            
+            // Safety: if fetch hangs for 10s, clear spinner and show not-found state
+            setTimeout(() => {
+                const pane = document.getElementById('lyrics-scroll-pane');
+                if (pane && pane.querySelector('.animate-spin')) {
+                    lyricsData = [];
+                    plainLyrics = '';
+                    buildLyricsUI();
+                }
+            }, 10000);
         }
         
         // Multi-provider JS lyrics fetcher for queue-navigation (client-side)
@@ -879,8 +889,10 @@ def render_player_html(
                     return;
                 }
                 const url = 'https://lrclib.net/api/search?q=' + uniqueQueries[qIdx];
-                fetch(url)
-                    .then(res => { if (res.ok) return res.json(); throw new Error(); })
+                const ctrl = new AbortController();
+                const tid = setTimeout(() => ctrl.abort(), 6000);
+                fetch(url, { signal: ctrl.signal })
+                    .then(res => { clearTimeout(tid); if (res.ok) return res.json(); throw new Error(); })
                     .then(data => {
                         if (data && data.length > 0) {
                             const match = data[0];
@@ -893,7 +905,7 @@ def render_player_html(
                         }
                         tryLrcLibSearch(qIdx + 1);
                     })
-                    .catch(() => tryLrcLibSearch(qIdx + 1));
+                    .catch(() => { clearTimeout(tid); tryLrcLibSearch(qIdx + 1); });
             }
             
             // ─── Step 4: Try LrcLib /api/search with explicit track_name+artist_name ─
@@ -922,8 +934,10 @@ def render_player_html(
                         fetchPlainLyricsFallback(title, artist, rawTitle, duration);
                         return;
                     }
-                    fetch(structuredVariants[idx])
-                        .then(res => { if (res.ok) return res.json(); throw new Error(); })
+                    const ctrl2 = new AbortController();
+                    const tid2 = setTimeout(() => ctrl2.abort(), 6000);
+                    fetch(structuredVariants[idx], { signal: ctrl2.signal })
+                        .then(res => { clearTimeout(tid2); if (res.ok) return res.json(); throw new Error(); })
                         .then(data => {
                             if (data && data.length > 0) {
                                 const match = data[0];
@@ -936,7 +950,7 @@ def render_player_html(
                             }
                             tryStructured(idx + 1);
                         })
-                        .catch(() => tryStructured(idx + 1));
+                        .catch(() => { clearTimeout(tid2); tryStructured(idx + 1); });
                 }
                 tryStructured(0);
             }
@@ -950,7 +964,16 @@ def render_player_html(
             }
             
             tryLrcLibSearch(0);
-        }
+            
+            // ─── Global safety timeout: if ALL fetches hang (e.g. CSP/network block),
+            // fall back to whatever Python already injected into lyricsData/plainLyrics ─
+            setTimeout(() => {
+                const pane = document.getElementById('lyrics-scroll-pane');
+                if (pane && (pane.innerHTML.trim() === '' || pane.querySelector('.animate-spin'))) {
+                    // Still showing spinner after 8s — use Python-injected data or show not-found
+                    buildLyricsUI();
+                }
+            }, 8000);
         
         function fetchPlainLyricsFallback(title, artist, rawTitle, duration) {
             // Lyrics.ovh — try multiple title/artist combos
@@ -971,8 +994,10 @@ def render_player_html(
                     buildLyricsUI();
                     return;
                 }
-                fetch(attempts[idx])
-                    .then(res => { if (res.ok) return res.json(); throw new Error(); })
+                const ctrl3 = new AbortController();
+                const tid3 = setTimeout(() => ctrl3.abort(), 6000);
+                fetch(attempts[idx], { signal: ctrl3.signal })
+                    .then(res => { clearTimeout(tid3); if (res.ok) return res.json(); throw new Error(); })
                     .then(data => {
                         if (data && data.lyrics && data.lyrics.trim().length > 20) {
                             plainLyrics = data.lyrics;
@@ -983,7 +1008,7 @@ def render_player_html(
                             tryOvh(idx + 1);
                         }
                     })
-                    .catch(() => tryOvh(idx + 1));
+                    .catch(() => { clearTimeout(tid3); tryOvh(idx + 1); });
             }
             tryOvh(0);
         }
