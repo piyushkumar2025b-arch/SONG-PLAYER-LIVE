@@ -30,7 +30,7 @@ def render_player_html(
     # Raw string to avoid f-string brace escaping AND invalid escape sequence warnings.
     # We will use .replace() for all key template variables.
     html_template = r"""<!DOCTYPE html>
-<html lang="en" class="h-full">
+<html lang="en" style="height:100%;overflow:hidden;">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -54,6 +54,10 @@ def render_player_html(
     <!-- Include Three.js for 3D Visualizations -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <style>
+        html, body {
+            height: 100%;
+            width: 100%;
+        }
         body {
             font-family: 'Outfit', sans-serif;
             background: transparent;
@@ -215,7 +219,7 @@ def render_player_html(
         }
     </style>
 </head>
-<body class="h-full flex items-center justify-center p-3 select-none">
+<body class="h-full flex items-center justify-center p-0 select-none">
     
     <!-- Ambient Glowing Background Orbs -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#060810]">
@@ -225,7 +229,7 @@ def render_player_html(
     </div>
     
     <!-- Main Player UI Card Container with Ambilight back-glow -->
-    <div class="relative w-full max-w-5xl h-[580px] card-enter">
+    <div class="relative w-full max-w-5xl h-[610px] card-enter">
         <!-- Dynamic behind-the-scenes Ambient Ambilight Backglow -->
         <div id="player-ambilight-glow" class="absolute -inset-10 rounded-[40px] opacity-60 blur-[60px] pointer-events-none -z-10 transition-all duration-300"></div>
         
@@ -236,7 +240,7 @@ def render_player_html(
             <div id="interactive-cursor-glow" class="absolute w-[350px] h-[350px] rounded-full pointer-events-none -z-5 opacity-0 blur-[80px] transition-opacity duration-500" style="background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 70%);"></div>
         
         <!-- Left Side: Music Panel (Controls & Visualizers) -->
-        <div id="music-panel" class="w-full md:w-[45%] p-6 flex flex-col justify-between border-r border-white/5 relative z-10 transition-all duration-500 ease-in-out">
+        <div id="music-panel" class="w-full md:w-[45%] px-5 py-3 flex flex-col justify-between border-r border-white/5 relative z-10 transition-all duration-500 ease-in-out">
             
             <!-- Header (Title & Mode Toggle) -->
             <div class="flex items-center justify-between">
@@ -256,7 +260,7 @@ def render_player_html(
             </div>
             
             <!-- Display Section (Rotating Album Art OR 3D Visualizer Canvas OR YouTube Video) -->
-            <div class="flex-grow flex items-center justify-center py-4 relative" style="min-height: 250px;">
+            <div class="flex-grow flex items-center justify-center py-2 relative" style="min-height: 180px; max-height: 220px;">
                 
                 <!-- Three.js 3D Visualizer Canvas Container (Hidden by default, shown when 3D style is chosen) -->
                 <div id="three-visualizer-container" class="absolute inset-0 w-full h-full pointer-events-none z-0 overflow-hidden rounded-2xl"></div>
@@ -266,7 +270,7 @@ def render_player_html(
                 
                 <!-- Audio Mode View (Rotating Vinyl Record) -->
                 <div id="audio-view" class="flex flex-col items-center justify-center transition-all duration-500 w-full z-10">
-                    <div class="relative group vinyl-enter-active">
+                    <div class="relative group vinyl-enter-active" style="transform:scale(0.85);">
                         <!-- Vinyl Record Background Frame -->
                         <div id="vinyl-record" class="w-48 h-48 rounded-full bg-black border-4 border-zinc-800 flex items-center justify-center shadow-2xl relative transition-transform duration-75">
                             <div class="absolute inset-2 rounded-full border border-zinc-900/30 opacity-60"></div>
@@ -302,7 +306,7 @@ def render_player_html(
             </div>
             
             <!-- Playback Controls -->
-            <div class="flex flex-col gap-3 z-10">
+            <div class="flex flex-col gap-2 z-10">
                 
                 <!-- Progress Bar & Time -->
                 <div>
@@ -314,7 +318,7 @@ def render_player_html(
                 </div>
                 
                 <!-- Dynamic Button Controls with Prev/Next and Shuffle/Repeat -->
-                <div class="flex items-center justify-center gap-4 py-0.5">
+                <div class="flex items-center justify-center gap-4">
                     <!-- Shuffle Button -->
                     <button id="shuffle-btn" onclick="toggleShuffle()" class="text-white/40 hover:text-white transition-colors" title="Shuffle Off">
                         <i data-lucide="shuffle" class="w-4 h-4"></i>
@@ -420,7 +424,7 @@ def render_player_html(
         </div>
         
         <!-- Right Side: Lyrics Panel -->
-        <div id="lyrics-panel" class="w-full md:w-[55%] h-full flex flex-col justify-between p-6 relative z-10 bg-black/25 transition-all duration-500 ease-in-out">
+        <div id="lyrics-panel" class="w-full md:w-[55%] h-full flex flex-col justify-between px-5 py-3 relative z-10 bg-black/25 transition-all duration-500 ease-in-out">
             
             <!-- Panel Header -->
             <div class="flex items-center justify-between border-b border-white/5 pb-3">
@@ -1376,7 +1380,7 @@ def render_player_html(
             
             if (isFocusMode) {
                 musicPanel.classList.add('md:w-0', 'p-0', 'border-r-0', 'opacity-0', 'overflow-hidden');
-                musicPanel.classList.remove('md:w-[45%]', 'p-6');
+                musicPanel.classList.remove('md:w-[45%]', 'px-5', 'py-3');
                 lyricsPanel.classList.add('md:w-full');
                 lyricsPanel.classList.remove('md:w-[55%]');
                 scrollPane.classList.add('text-center');
@@ -1389,7 +1393,7 @@ def render_player_html(
                 effectsBar.classList.remove('hidden');
             } else {
                 musicPanel.classList.remove('md:w-0', 'p-0', 'border-r-0', 'opacity-0', 'overflow-hidden');
-                musicPanel.classList.add('md:w-[45%]', 'p-6');
+                musicPanel.classList.add('md:w-[45%]', 'px-5', 'py-3');
                 lyricsPanel.classList.remove('md:w-full');
                 lyricsPanel.classList.add('md:w-[55%]');
                 scrollPane.classList.remove('text-center');

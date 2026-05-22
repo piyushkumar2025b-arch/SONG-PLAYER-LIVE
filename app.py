@@ -715,7 +715,7 @@ if st.session_state.current_song:
         current_index=current_index
     )
     
-    st.iframe(player_html, height=590)
+    st.iframe(player_html, height=620)
     
     # 2. Sub-controls (Favorites, Playlists, Manual Search, Close player)
     ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([1.5, 2.5, 3.5, 1])
