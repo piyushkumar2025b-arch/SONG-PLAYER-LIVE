@@ -217,19 +217,285 @@ def render_player_html(
         input[type="range"]::-webkit-slider-thumb:hover {
             transform: scale(1.2);
         }
+
+        /* ── Switch to Video neon highlight (until clicked) ── */
+        @keyframes switchToVideoGlow {
+            0%   { box-shadow: 0 0 6px rgba(244,63,94,0.7), 0 0 14px rgba(244,63,94,0.4), inset 0 0 6px rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.8); }
+            25%  { box-shadow: 0 0 8px rgba(168,85,247,0.7), 0 0 18px rgba(168,85,247,0.4), inset 0 0 6px rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.8); }
+            50%  { box-shadow: 0 0 8px rgba(6,182,212,0.7),  0 0 18px rgba(6,182,212,0.4),  inset 0 0 6px rgba(6,182,212,0.15);  border-color: rgba(6,182,212,0.8); }
+            75%  { box-shadow: 0 0 8px rgba(168,85,247,0.7), 0 0 18px rgba(168,85,247,0.4), inset 0 0 6px rgba(168,85,247,0.15); border-color: rgba(168,85,247,0.8); }
+            100% { box-shadow: 0 0 6px rgba(244,63,94,0.7), 0 0 14px rgba(244,63,94,0.4), inset 0 0 6px rgba(244,63,94,0.15); border-color: rgba(244,63,94,0.8); }
+        }
+        @keyframes switchToVideoPulseText {
+            0%,100% { color: rgba(255,255,255,0.95); text-shadow: 0 0 8px rgba(244,63,94,0.8); }
+            33%     { color: #c4b5fd; text-shadow: 0 0 8px rgba(168,85,247,0.9); }
+            66%     { color: #67e8f9; text-shadow: 0 0 8px rgba(6,182,212,0.9); }
+        }
+        #mode-toggle-btn.neon-cta {
+            animation: switchToVideoGlow 2s ease-in-out infinite;
+            background: rgba(244,63,94,0.08) !important;
+            border-width: 1px;
+        }
+        #mode-toggle-btn.neon-cta span,
+        #mode-toggle-btn.neon-cta i {
+            animation: switchToVideoPulseText 2s ease-in-out infinite;
+        }
+
+        /* Neon border shimmer on panel hover */
+        .glass-panel {
+            transition: box-shadow 0.5s ease;
+        }
+        .glass-panel:hover {
+            box-shadow: 0 0 0 1px rgba(244, 63, 94, 0.15), 0 0 40px rgba(244, 63, 94, 0.08), 0 30px 80px rgba(0,0,0,0.5);
+        }
+
+        /* Neon pill button glow on hover */
+        .neon-pill {
+            position: relative;
+            overflow: hidden;
+        }
+        .neon-pill::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background: linear-gradient(135deg, rgba(244,63,94,0.15), rgba(168,85,247,0.15), rgba(6,182,212,0.15));
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .neon-pill:hover::after { opacity: 1; }
+
+        /* Rainbow border sweep animation */
+        @keyframes rainbowBorder {
+            0%   { border-color: rgba(244,63,94,0.6); box-shadow: 0 0 12px rgba(244,63,94,0.4); }
+            25%  { border-color: rgba(168,85,247,0.6); box-shadow: 0 0 12px rgba(168,85,247,0.4); }
+            50%  { border-color: rgba(6,182,212,0.6); box-shadow: 0 0 12px rgba(6,182,212,0.4); }
+            75%  { border-color: rgba(251,191,36,0.6); box-shadow: 0 0 12px rgba(251,191,36,0.4); }
+            100% { border-color: rgba(244,63,94,0.6); box-shadow: 0 0 12px rgba(244,63,94,0.4); }
+        }
+
+        /* Neon scan line animation */
+        @keyframes scanline {
+            0%   { transform: translateY(-100%); opacity: 0.6; }
+            100% { transform: translateY(100vh); opacity: 0; }
+        }
+        .scanline-overlay {
+            position: fixed; inset: 0; pointer-events: none; z-index: 9998;
+            overflow: hidden;
+        }
+        .scanline-overlay::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, rgba(244,63,94,0.3), rgba(168,85,247,0.3), transparent);
+            animation: scanline 6s linear infinite;
+        }
+
+        /* Fullscreen mode */
+        #player-fullscreen-wrapper {
+            transition: all 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        body.fullscreen-active {
+            overflow: hidden;
+        }
+        body.fullscreen-active #player-fullscreen-wrapper {
+            position: fixed !important;
+            inset: 0 !important;
+            z-index: 9999 !important;
+            max-width: 100vw !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            padding: 0 !important;
+            border-radius: 0 !important;
+            display: flex;
+            align-items: stretch;
+        }
+        body.fullscreen-active #player-fullscreen-wrapper .glass-panel {
+            border-radius: 0 !important;
+            height: 100vh !important;
+        }
+        body.fullscreen-active #player-fullscreen-wrapper .relative {
+            height: 100vh !important;
+            max-width: 100vw !important;
+            width: 100vw !important;
+        }
+        body.fullscreen-active #music-panel {
+            width: 42% !important;
+        }
+        body.fullscreen-active #lyrics-panel {
+            width: 58% !important;
+        }
+        body.fullscreen-active #lyrics-scroll-pane {
+            font-size: 1.35rem !important;
+            line-height: 2.4rem !important;
+        }
+        #fullscreen-btn {
+            transition: all 0.25s ease;
+        }
+        #fullscreen-btn:hover {
+            animation: rainbowBorder 1.5s linear infinite;
+            transform: scale(1.08);
+        }
+        body.fullscreen-active #fullscreen-btn {
+            background: rgba(244,63,94,0.15) !important;
+            border-color: rgba(244,63,94,0.5) !important;
+            animation: rainbowBorder 2s linear infinite;
+        }
+
+        /* Neon corner brackets decoration */
+        .neon-bracket-box {
+            position: relative;
+        }
+        .neon-bracket-box::before, .neon-bracket-box::after {
+            content: '';
+            position: absolute;
+            width: 14px; height: 14px;
+            border-color: rgba(244,63,94,0.5);
+            border-style: solid;
+            pointer-events: none;
+            transition: border-color 0.4s;
+        }
+        .neon-bracket-box::before {
+            top: 4px; left: 4px;
+            border-width: 2px 0 0 2px;
+            border-top-left-radius: 4px;
+        }
+        .neon-bracket-box::after {
+            bottom: 4px; right: 4px;
+            border-width: 0 2px 2px 0;
+            border-bottom-right-radius: 4px;
+        }
+
+        /* Spectrum bar animation for header icons */
+        @keyframes spectrumBar {
+            0%,100% { height: 6px; }
+            50% { height: 14px; }
+        }
+        .spectrum-icon span {
+            display: inline-block;
+            width: 3px;
+            background: var(--accent-color, #f43f5e);
+            border-radius: 2px;
+            animation: spectrumBar 0.8s ease-in-out infinite;
+            vertical-align: bottom;
+        }
+        .spectrum-icon span:nth-child(2) { animation-delay: 0.15s; }
+        .spectrum-icon span:nth-child(3) { animation-delay: 0.3s; }
+        .spectrum-icon span:nth-child(4) { animation-delay: 0.1s; }
+
+        /* Neon tooltip glow */
+        .neon-tooltip {
+            position: relative;
+        }
+        .neon-tooltip:hover::before {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(10,16,30,0.95);
+            border: 1px solid rgba(244,63,94,0.4);
+            box-shadow: 0 0 10px rgba(244,63,94,0.3);
+            color: #f9fafb;
+            font-size: 10px;
+            padding: 4px 10px;
+            border-radius: 8px;
+            white-space: nowrap;
+            z-index: 9000;
+            pointer-events: none;
+        }
+
+        /* Extra theme: Holographic */
+        @keyframes holoPrism {
+            0%   { filter: hue-rotate(0deg) brightness(1.1); }
+            50%  { filter: hue-rotate(180deg) brightness(1.3); }
+            100% { filter: hue-rotate(360deg) brightness(1.1); }
+        }
+        body.theme-holo .lyric-line.active {
+            animation: holoPrism 3s linear infinite;
+            background: linear-gradient(135deg, rgba(244,63,94,0.1), rgba(168,85,247,0.1), rgba(6,182,212,0.1)) !important;
+        }
+
+        /* Extra theme: Matrix Green */
+        body.theme-matrix {
+            --accent-color: #22c55e;
+            --active-glow: rgba(34,197,94,0.35);
+        }
+        body.theme-matrix .lyric-line.active {
+            border-color: rgba(34,197,94,0.4) !important;
+            text-shadow: 0 0 12px rgba(34,197,94,0.8);
+        }
+
+        /* Extra theme: Ice Blue */
+        body.theme-ice {
+            --accent-color: #38bdf8;
+            --active-glow: rgba(56,189,248,0.35);
+        }
+
+        /* Glow pulse ring on now-playing dot */
+        @keyframes outerRingPulse {
+            0%   { box-shadow: 0 0 0 0 rgba(244,63,94,0.5); }
+            70%  { box-shadow: 0 0 0 8px rgba(244,63,94,0); }
+            100% { box-shadow: 0 0 0 0 rgba(244,63,94,0); }
+        }
+        .now-playing-ring {
+            animation: outerRingPulse 1.6s ease-out infinite;
+        }
+
+        /* Lyrics panel neon glow border when active line plays */
+        #lyrics-panel.beat-glow {
+            box-shadow: inset 0 0 30px rgba(244,63,94,0.07);
+            transition: box-shadow 0.1s;
+        }
+
+        /* Floating particles canvas */
+        #neon-particles-canvas {
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+            opacity: 0.45;
+        }
+
+        /* Header title neon shimmer */
+        @keyframes headerShimmer {
+            0%   { text-shadow: 0 0 8px rgba(244,63,94,0.0); }
+            50%  { text-shadow: 0 0 16px rgba(244,63,94,0.5), 0 0 32px rgba(168,85,247,0.3); }
+            100% { text-shadow: 0 0 8px rgba(244,63,94,0.0); }
+        }
+        h3.lyrics-header-glow {
+            animation: headerShimmer 3s ease-in-out infinite;
+        }
+
+        /* DSP bar neon active */
+        .eq-active-neon {
+            background: linear-gradient(90deg, rgba(244,63,94,0.3), rgba(168,85,247,0.3)) !important;
+            border: 1px solid rgba(244,63,94,0.4) !important;
+            box-shadow: 0 0 8px rgba(244,63,94,0.3);
+        }
     </style>
 </head>
 <body class="h-full flex items-center justify-center p-0 select-none">
     
+    <!-- Scanline neon overlay -->
+    <div class="scanline-overlay" id="scanline-overlay"></div>
+
+    <!-- Neon floating particles canvas -->
+    <canvas id="neon-particles-canvas"></canvas>
+
     <!-- Ambient Glowing Background Orbs -->
     <div class="fixed inset-0 overflow-hidden pointer-events-none -z-10 bg-[#060810]">
         <div id="orb-1" class="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-rose-900/30 blur-[120px]"></div>
         <div id="orb-2" class="absolute -bottom-40 -right-40 w-96 h-96 rounded-full bg-blue-900/20 blur-[120px]"></div>
         <div id="orb-3" class="absolute top-1/2 left-1/3 w-80 h-80 rounded-full bg-purple-950/20 blur-[100px]"></div>
+        <!-- Extra orbs for richer ambient feel -->
+        <div id="orb-4" class="absolute top-1/4 right-1/4 w-72 h-72 rounded-full bg-cyan-900/15 blur-[100px]"></div>
+        <div id="orb-5" class="absolute bottom-1/4 left-1/4 w-64 h-64 rounded-full bg-fuchsia-900/15 blur-[90px]"></div>
     </div>
     
     <!-- Main Player UI Card Container with Ambilight back-glow -->
-    <div class="relative w-full max-w-5xl h-[610px] card-enter">
+    <div id="player-fullscreen-wrapper" class="relative w-full max-w-5xl h-[610px] card-enter">
         <!-- Dynamic behind-the-scenes Ambient Ambilight Backglow -->
         <div id="player-ambilight-glow" class="absolute -inset-10 rounded-[40px] opacity-60 blur-[60px] pointer-events-none -z-10 transition-all duration-300"></div>
         
@@ -256,7 +522,7 @@ def render_player_html(
                 </div>
                 
                 <!-- Audio/Video Mode Switcher -->
-                <button id="mode-toggle-btn" onclick="togglePlayMode()" class="px-3 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1.5 transition-all text-white/80">
+                <button id="mode-toggle-btn" onclick="togglePlayMode()" class="px-3 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1.5 transition-all text-white/80 neon-cta">
                     <i data-lucide="video" class="w-3.5 h-3.5"></i>
                     <span>Switch to Video</span>
                 </button>
@@ -393,6 +659,10 @@ def render_player_html(
                         <button onclick="setVisualizerStyle('galaxy')" id="viz-btn-galaxy" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">3D Vortex</button>
                         <button onclick="setVisualizerStyle('stars')" id="viz-btn-stars" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">⭐ Stars</button>
                         <button onclick="setVisualizerStyle('city')" id="viz-btn-city" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">🏙 City</button>
+                        <!-- ✨ NEW visualizer presets -->
+                        <button onclick="setVisualizerStyle('dna')" id="viz-btn-dna" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">🧬 DNA</button>
+                        <button onclick="setVisualizerStyle('fire')" id="viz-btn-fire" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">🔥 Fire</button>
+                        <button onclick="setVisualizerStyle('aurora')" id="viz-btn-aurora" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">🌌 Aurora</button>
                     </div>
                 </div>
                 
@@ -408,6 +678,11 @@ def render_player_html(
                         <button onclick="setTheme('cyberpunk')" id="theme-btn-cyberpunk" class="w-3 h-3 rounded-full bg-fuchsia-500 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Cyberpunk Neon"></button>
                         <button onclick="setTheme('ocean')" id="theme-btn-ocean" class="w-3 h-3 rounded-full bg-indigo-500 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Deep Ocean"></button>
                         <button onclick="setTheme('amber')" id="theme-btn-amber" class="w-3 h-3 rounded-full bg-amber-500 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Gold Amber"></button>
+                        <!-- ✨ NEW themes -->
+                        <button onclick="setTheme('matrix')" id="theme-btn-matrix" class="w-3 h-3 rounded-full bg-green-400 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Matrix Green"></button>
+                        <button onclick="setTheme('ice')" id="theme-btn-ice" class="w-3 h-3 rounded-full bg-sky-300 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Ice Blue"></button>
+                        <button onclick="setTheme('holo')" id="theme-btn-holo" class="w-3 h-3 rounded-full opacity-60 hover:opacity-100 transition-all hover:scale-105" style="background: linear-gradient(135deg,#f43f5e,#a855f7,#06b6d4);" title="Holographic"></button>
+                        <button onclick="setTheme('lava')" id="theme-btn-lava" class="w-3 h-3 rounded-full bg-orange-500 opacity-60 hover:opacity-100 transition-all hover:scale-105" title="Lava Orange"></button>
                     </div>
                 </div>
                 
@@ -423,6 +698,10 @@ def render_player_html(
                         <button onclick="setEqualizerPreset('vocals')" id="eq-btn-vocals" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">Vocals</button>
                         <button onclick="setEqualizerPreset('concert')" id="eq-btn-concert" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">3D Hall</button>
                         <button onclick="setEqualizerPreset('cyber')" id="eq-btn-cyber" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">Electronic</button>
+                        <!-- ✨ NEW DSP presets -->
+                        <button onclick="setEqualizerPreset('lofi')" id="eq-btn-lofi" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">Lo-Fi</button>
+                        <button onclick="setEqualizerPreset('hifi')" id="eq-btn-hifi" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">Hi-Fi</button>
+                        <button onclick="setEqualizerPreset('night')" id="eq-btn-night" class="px-1 py-0.5 rounded text-[8px] text-white/60 hover:text-white font-medium transition-all">🌙 Night</button>
                     </div>
                 </div>
             </div>
@@ -435,24 +714,36 @@ def render_player_html(
             <div class="flex items-center justify-between border-b border-white/5 pb-3">
                 <div class="flex items-center gap-2">
                     <i data-lucide="music-2" class="w-4 h-4 text-rose-500"></i>
-                    <h3 class="text-sm font-semibold tracking-wider uppercase text-white/70">Lyrics Reader</h3>
+                    <h3 class="text-sm font-semibold tracking-wider uppercase text-white/70 lyrics-header-glow">Lyrics Reader</h3>
+                    <!-- Spectrum bars decoration -->
+                    <span class="spectrum-icon flex items-end gap-[2px] h-4 ml-1">
+                        <span style="height:5px;animation-delay:0s;"></span>
+                        <span style="height:9px;animation-delay:0.15s;"></span>
+                        <span style="height:6px;animation-delay:0.3s;"></span>
+                        <span style="height:11px;animation-delay:0.1s;"></span>
+                    </span>
                 </div>
                 
                 <div class="flex items-center gap-2">
                     <!-- NEW: Lyrics Search Toggle -->
-                    <button id="lyrics-search-btn" onclick="toggleLyricsSearch()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80" title="Search Lyrics">
+                    <button id="lyrics-search-btn" onclick="toggleLyricsSearch()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80 neon-tooltip" data-tip="Search lyrics" title="Search Lyrics">
                         <i data-lucide="search" class="w-3 h-3 text-yellow-400"></i>
                         <span>Find</span>
                     </button>
                     <!-- Up Next Queue Drawer Toggle -->
-                    <button id="queue-drawer-btn" onclick="toggleQueueDrawer()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80" title="Show Up Next Queue">
+                    <button id="queue-drawer-btn" onclick="toggleQueueDrawer()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80 neon-tooltip" data-tip="Up next queue" title="Show Up Next Queue">
                         <i data-lucide="list-music" class="w-3 h-3 text-cyan-400"></i>
                         <span>Queue</span>
                     </button>
                     <!-- Spotify Focus Mode Switcher -->
-                    <button id="focus-toggle-btn" onclick="toggleFocusMode()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80" title="Toggle Spotify Focus Mode">
+                    <button id="focus-toggle-btn" onclick="toggleFocusMode()" class="px-2.5 py-1 text-xs rounded-full border border-white/10 hover:border-white/30 bg-white/5 hover:bg-white/10 flex items-center gap-1 transition-all text-white/80 neon-tooltip" data-tip="Spotify focus mode" title="Toggle Spotify Focus Mode">
                         <i data-lucide="maximize-2" class="w-3 h-3 text-rose-400"></i>
                         <span>Spotify Mode</span>
+                    </button>
+                    <!-- ✨ NEW: Fullscreen Button -->
+                    <button id="fullscreen-btn" onclick="toggleFullscreen()" class="px-2.5 py-1 text-xs rounded-full border border-white/15 hover:border-rose-500/50 bg-white/5 hover:bg-rose-500/10 flex items-center gap-1 transition-all text-white/80 neon-tooltip" data-tip="Fullscreen player" title="Toggle Fullscreen">
+                        <i data-lucide="expand" class="w-3 h-3 text-fuchsia-400"></i>
+                        <span>Full Screen</span>
                     </button>
                     <span id="lyrics-type-badge" class="px-2 py-0.5 text-[9px] font-bold uppercase rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/20">Synced</span>
                 </div>
@@ -694,6 +985,43 @@ def render_player_html(
                 vizColors: ['rgba(245, 158, 11, 0.45)', 'rgba(239, 68, 68, 0.35)', 'rgba(251, 191, 36, 0.25)'],
                 threeHex: 0xfbbf24,
                 complementaryHex: 0xd946ef
+            },
+            // ✨ NEW THEMES
+            matrix: {
+                name: "Matrix Green",
+                orbs: ["rgba(34, 197, 94, 0.35)", "rgba(16, 185, 129, 0.25)", "rgba(4, 120, 87, 0.25)"],
+                accent: "#22c55e",
+                glow: "rgba(34, 197, 94, 0.5)",
+                vizColors: ['rgba(34, 197, 94, 0.45)', 'rgba(16, 185, 129, 0.35)', 'rgba(6, 182, 212, 0.20)'],
+                threeHex: 0x22c55e,
+                complementaryHex: 0x06b6d4
+            },
+            ice: {
+                name: "Ice Blue",
+                orbs: ["rgba(56, 189, 248, 0.35)", "rgba(14, 165, 233, 0.25)", "rgba(99, 102, 241, 0.20)"],
+                accent: "#38bdf8",
+                glow: "rgba(56, 189, 248, 0.5)",
+                vizColors: ['rgba(56, 189, 248, 0.45)', 'rgba(14, 165, 233, 0.35)', 'rgba(99, 102, 241, 0.20)'],
+                threeHex: 0x38bdf8,
+                complementaryHex: 0xf43f5e
+            },
+            holo: {
+                name: "Holographic",
+                orbs: ["rgba(244, 63, 94, 0.25)", "rgba(168, 85, 247, 0.25)", "rgba(6, 182, 212, 0.25)"],
+                accent: "#a855f7",
+                glow: "rgba(168, 85, 247, 0.5)",
+                vizColors: ['rgba(244, 63, 94, 0.4)', 'rgba(168, 85, 247, 0.4)', 'rgba(6, 182, 212, 0.4)'],
+                threeHex: 0xa855f7,
+                complementaryHex: 0x06b6d4
+            },
+            lava: {
+                name: "Lava Orange",
+                orbs: ["rgba(249, 115, 22, 0.35)", "rgba(239, 68, 68, 0.25)", "rgba(234, 88, 12, 0.20)"],
+                accent: "#f97316",
+                glow: "rgba(249, 115, 22, 0.5)",
+                vizColors: ['rgba(249, 115, 22, 0.45)', 'rgba(239, 68, 68, 0.35)', 'rgba(245, 158, 11, 0.25)'],
+                threeHex: 0xf97316,
+                complementaryHex: 0xfbbf24
             }
         };
         let currentTheme = 'rose';
@@ -1811,6 +2139,8 @@ def render_player_html(
                     <i data-lucide="music" class="w-3.5 h-3.5"></i>
                     <span>Switch to Audio</span>
                 `;
+                // User pressed it — remove the neon highlight
+                modeBtn.classList.remove('neon-cta');
             } else {
                 videoView.classList.remove('opacity-100');
                 videoView.classList.add('opacity-0');
@@ -1829,6 +2159,8 @@ def render_player_html(
                     <i data-lucide="video" class="w-3.5 h-3.5"></i>
                     <span>Switch to Video</span>
                 `;
+                // Back to audio — re-add neon highlight to prompt again
+                modeBtn.classList.add('neon-cta');
             }
             lucide.createIcons();
         }
@@ -1980,11 +2312,16 @@ def render_player_html(
             syncLyricsNow();
             // Repaint waveform scrubber with new theme colour
             if (player) drawWaveformScrubber((getPlayerTime()||0) / (currentSongDuration||1));
+            // Apply body theme class for CSS-driven theme overrides
+            document.body.classList.remove('theme-holo','theme-matrix','theme-ice');
+            if (themeName === 'holo') document.body.classList.add('theme-holo');
+            if (themeName === 'matrix') document.body.classList.add('theme-matrix');
+            if (themeName === 'ice') document.body.classList.add('theme-ice');
         }
         
         function setEqualizerPreset(preset) {
             eqPreset = preset;
-            const presets = ['flat', 'bass', 'vocals', 'concert', 'cyber'];
+            const presets = ['flat', 'bass', 'vocals', 'concert', 'cyber', 'lofi', 'hifi', 'night'];
             
             presets.forEach(p => {
                 const btn = document.getElementById(`eq-btn-${p}`);
@@ -2002,7 +2339,10 @@ def render_player_html(
                 bass: "DSP: Bass Booster 🔥",
                 vocals: "DSP: Vocal Enhancer ✨",
                 concert: "DSP: 3D Concert Hall 🪐",
-                cyber: "DSP: Electronic Space ⚡"
+                cyber: "DSP: Electronic Space ⚡",
+                lofi: "DSP: Lo-Fi Chill 🎧",
+                hifi: "DSP: Hi-Fi Audiophile 🎵",
+                night: "DSP: Night Mode 🌙"
             };
             
             stStatusToast(labels[preset] || "DSP Equalizer Updated");
@@ -2011,6 +2351,96 @@ def render_player_html(
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
             }
         }
+
+        // ════════════════════════════════════════════════════
+        //  ✨ FULLSCREEN TOGGLE  (Added feature)
+        // ════════════════════════════════════════════════════
+        let isFullscreen = false;
+        function toggleFullscreen() {
+            isFullscreen = !isFullscreen;
+            const body = document.body;
+            const wrapper = document.getElementById('player-fullscreen-wrapper');
+            const btn = document.getElementById('fullscreen-btn');
+            const btnIcon = btn ? btn.querySelector('i[data-lucide]') : null;
+            const btnSpan = btn ? btn.querySelector('span') : null;
+
+            if (isFullscreen) {
+                body.classList.add('fullscreen-active');
+                if (btnIcon) { btnIcon.setAttribute('data-lucide', 'shrink'); lucide.createIcons(); }
+                if (btnSpan) btnSpan.textContent = 'Exit Full';
+                if (btn) {
+                    btn.title = 'Exit Fullscreen';
+                    btn.classList.add('border-rose-500/50');
+                }
+                stStatusToast('🖥 Fullscreen Mode ON — Press Esc to exit');
+            } else {
+                body.classList.remove('fullscreen-active');
+                if (btnIcon) { btnIcon.setAttribute('data-lucide', 'expand'); lucide.createIcons(); }
+                if (btnSpan) btnSpan.textContent = 'Full Screen';
+                if (btn) {
+                    btn.title = 'Toggle Fullscreen';
+                    btn.classList.remove('border-rose-500/50');
+                }
+                stStatusToast('⬛ Exited Fullscreen');
+            }
+            // Resize 3D renderer if active
+            setTimeout(() => {
+                if (renderer3d) {
+                    const c = document.getElementById('three-visualizer-container');
+                    if (c) renderer3d.setSize(c.clientWidth, c.clientHeight);
+                }
+            }, 500);
+        }
+        // Allow Esc to exit fullscreen
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isFullscreen) toggleFullscreen();
+        });
+
+        // ════════════════════════════════════════════════════
+        //  ✨ NEON FLOATING PARTICLES  (Added visual effect)
+        // ════════════════════════════════════════════════════
+        (function initNeonParticles() {
+            const canvas = document.getElementById('neon-particles-canvas');
+            if (!canvas) return;
+            const ctx2 = canvas.getContext('2d');
+            let W = canvas.width = window.innerWidth;
+            let H = canvas.height = window.innerHeight;
+            window.addEventListener('resize', () => {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            });
+            const COLORS = ['#f43f5e','#a855f7','#06b6d4','#fbbf24','#22c55e'];
+            const particles = Array.from({length: 55}, () => ({
+                x: Math.random() * W,
+                y: Math.random() * H,
+                r: Math.random() * 1.8 + 0.4,
+                vx: (Math.random() - 0.5) * 0.35,
+                vy: (Math.random() - 0.5) * 0.35,
+                color: COLORS[Math.floor(Math.random() * COLORS.length)],
+                alpha: Math.random() * 0.5 + 0.15,
+                pulse: Math.random() * Math.PI * 2
+            }));
+            function drawParticles() {
+                ctx2.clearRect(0, 0, W, H);
+                const t = Date.now() * 0.0008;
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    p.pulse += 0.015;
+                    if (p.x < 0) p.x = W; if (p.x > W) p.x = 0;
+                    if (p.y < 0) p.y = H; if (p.y > H) p.y = 0;
+                    const a = p.alpha * (0.6 + 0.4 * Math.sin(p.pulse));
+                    ctx2.beginPath();
+                    const grd = ctx2.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * 4);
+                    grd.addColorStop(0, p.color + Math.round(a * 255).toString(16).padStart(2,'0'));
+                    grd.addColorStop(1, 'transparent');
+                    ctx2.arc(p.x, p.y, p.r * 4, 0, Math.PI * 2);
+                    ctx2.fillStyle = grd;
+                    ctx2.fill();
+                });
+                requestAnimationFrame(drawParticles);
+            }
+            drawParticles();
+        })();
         
         // 9. Three.js 3D Visualizer Core Engine (Mind-blowing visual premium logic)
         function initThreeJS() {
