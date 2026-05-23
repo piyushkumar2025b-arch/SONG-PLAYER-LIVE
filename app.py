@@ -302,6 +302,225 @@ st.markdown("""
 
     /* HR dividers */
     hr { border-color: rgba(255,255,255,0.05) !important; }
+
+    /* ── NEW UI ADDITIONS ────────────────────────────────── */
+
+    /* Floating now-playing bottom bar */
+    .mini-now-playing {
+        position: fixed;
+        bottom: 0; left: 0; right: 0;
+        background: rgba(6,6,16,0.92);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-top: 1px solid rgba(244,63,94,0.18);
+        padding: 8px 24px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        z-index: 9999;
+        box-shadow: 0 -8px 32px rgba(0,0,0,0.4);
+    }
+    .mini-now-playing .mnp-thumb {
+        width: 36px; height: 36px;
+        border-radius: 6px;
+        object-fit: cover;
+        border: 1px solid rgba(244,63,94,0.3);
+    }
+    .mini-now-playing .mnp-title {
+        font-size: 0.8rem; font-weight: 700; color: #fff;
+        white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;
+    }
+    .mini-now-playing .mnp-artist {
+        font-size: 0.68rem; color: rgba(255,255,255,0.45);
+    }
+    .mnp-bars {
+        display: flex; align-items: flex-end; gap: 2px; height: 16px; margin-left: 4px;
+    }
+    .mnp-bar {
+        width: 3px; border-radius: 2px;
+        background: linear-gradient(180deg,#f43f5e,#a855f7);
+        animation: wavePulse 1.2s ease-in-out infinite;
+    }
+    .mnp-bar:nth-child(1){height:6px;animation-delay:0s;}
+    .mnp-bar:nth-child(2){height:10px;animation-delay:0.15s;}
+    .mnp-bar:nth-child(3){height:8px;animation-delay:0.3s;}
+    .mnp-bar:nth-child(4){height:13px;animation-delay:0.45s;}
+
+    /* Genre / tag pills */
+    .genre-pill {
+        display: inline-block;
+        background: linear-gradient(135deg, rgba(168,85,247,0.12), rgba(244,63,94,0.08));
+        border: 1px solid rgba(168,85,247,0.22);
+        border-radius: 20px;
+        padding: 3px 11px;
+        font-size: 0.68rem;
+        font-weight: 600;
+        color: #c084fc;
+        margin: 2px 3px 2px 0;
+        letter-spacing: 0.02em;
+    }
+
+    /* Song result card with shimmer on hover */
+    .search-result-card {
+        background: rgba(12,18,38,0.55);
+        border: 1px solid rgba(255,255,255,0.06);
+        border-radius: 18px;
+        padding: 14px;
+        margin-bottom: 10px;
+        transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+        position: relative;
+        overflow: hidden;
+    }
+    .search-result-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, transparent 30%, rgba(244,63,94,0.07) 50%, transparent 70%);
+        transform: translateX(-100%);
+        transition: transform 0.5s ease;
+    }
+    .search-result-card:hover::after {
+        transform: translateX(100%);
+    }
+    .search-result-card:hover {
+        border-color: rgba(244,63,94,0.28);
+        transform: translateY(-2px);
+        box-shadow: 0 12px 32px -8px rgba(244,63,94,0.18);
+    }
+
+    /* Keyboard shortcuts badge */
+    .kbd-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255,255,255,0.06);
+        border: 1px solid rgba(255,255,255,0.12);
+        border-bottom: 2px solid rgba(255,255,255,0.18);
+        border-radius: 5px;
+        padding: 1px 6px;
+        font-size: 0.62rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.55);
+        font-family: monospace;
+        margin: 0 2px;
+    }
+
+    /* Inline star rating row */
+    .inline-stars {
+        display: flex;
+        gap: 2px;
+        align-items: center;
+    }
+    .inline-stars span {
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: transform 0.15s, filter 0.15s;
+    }
+    .inline-stars span:hover {
+        transform: scale(1.25);
+        filter: drop-shadow(0 0 4px rgba(251,191,36,0.6));
+    }
+
+    /* Queue track number badge */
+    .q-num-badge {
+        width: 22px; height: 22px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.05);
+        border: 1px solid rgba(255,255,255,0.1);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.6rem; font-weight: 700;
+        color: rgba(255,255,255,0.4);
+        flex-shrink: 0;
+    }
+    .q-num-badge.active-q {
+        background: rgba(244,63,94,0.2);
+        border-color: rgba(244,63,94,0.5);
+        color: #f43f5e;
+    }
+
+    /* Stats chart bar */
+    .stat-bar-wrap { margin-bottom: 6px; }
+    .stat-bar-track {
+        background: rgba(255,255,255,0.04);
+        border-radius: 100px;
+        height: 8px;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    .stat-bar-fill {
+        height: 100%;
+        border-radius: 100px;
+        background: linear-gradient(90deg, #f43f5e, #a855f7);
+        transition: width 0.6s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* Tooltip-style info tag */
+    .info-tag {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.68rem;
+        color: rgba(255,255,255,0.38);
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 6px;
+        padding: 2px 7px;
+    }
+
+    /* Page section header pill */
+    .section-header-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 7px;
+        background: linear-gradient(135deg, rgba(244,63,94,0.1), rgba(168,85,247,0.08));
+        border: 1px solid rgba(244,63,94,0.2);
+        border-radius: 12px;
+        padding: 6px 14px;
+        margin-bottom: 18px;
+    }
+    .section-header-pill span.pill-label {
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: rgba(255,255,255,0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+    }
+    .section-header-pill span.pill-icon {
+        font-size: 1rem;
+    }
+
+    /* Pulse dot (live indicator) */
+    .live-dot {
+        width: 7px; height: 7px;
+        border-radius: 50%;
+        background: #22c55e;
+        display: inline-block;
+        box-shadow: 0 0 0 0 rgba(34,197,94,0.6);
+        animation: livePulse 1.5s ease-out infinite;
+    }
+    @keyframes livePulse {
+        0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.55); }
+        70% { box-shadow: 0 0 0 7px rgba(34,197,94,0); }
+        100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+    }
+
+    /* Gradient text utility */
+    .grad-text {
+        background: linear-gradient(135deg, #f43f5e 0%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* Duration chip */
+    .dur-chip {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.07);
+        border-radius: 6px;
+        padding: 2px 8px;
+        font-size: 0.68rem;
+        font-family: monospace;
+        color: rgba(255,255,255,0.45);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -759,6 +978,33 @@ with st.sidebar:
 
     st.markdown("<hr style='border-color: rgba(255,255,255,0.05); margin: 1rem 0;'>", unsafe_allow_html=True)
 
+    # --- Keyboard Shortcuts Quick Reference ---
+    with st.expander("⌨️ Keyboard Shortcuts", expanded=False):
+        st.markdown("""
+        <div style="font-size:0.72rem; line-height:2.2; color:rgba(255,255,255,0.55);">
+            <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span>Play / Pause</span><span class="kbd-badge">Space</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span>Skip 10s forward</span><span class="kbd-badge">→</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span>Skip 10s back</span><span class="kbd-badge">←</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span>Volume up</span><span class="kbd-badge">↑</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04);">
+                <span>Volume down</span><span class="kbd-badge">↓</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;padding:2px 0;">
+                <span>Mute</span><span class="kbd-badge">M</span>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+
     # --- Animated Now Playing Widget ---
     if st.session_state.current_song:
         curr = st.session_state.current_song
@@ -938,9 +1184,42 @@ if st.session_state.current_song:
 
     st.markdown("<hr style='border-color: rgba(255,255,255,0.05); margin: 2rem 0;'>", unsafe_allow_html=True)
 
+# ── Floating mini now-playing bar (rendered on all pages when a song is active) ──
+if st.session_state.current_song:
+    _c = st.session_state.current_song
+    _m, _s = divmod(int(_c.get('duration', 0)), 60)
+    st.markdown(f"""
+    <div class="mini-now-playing">
+        <img class="mnp-thumb" src="{_c['thumbnail']}" alt="thumb">
+        <div style="flex:1;overflow:hidden;">
+            <div class="mnp-title">{_c['title']}</div>
+            <div class="mnp-artist">{_c['uploader']}</div>
+        </div>
+        <div class="mnp-bars">
+            <div class="mnp-bar"></div>
+            <div class="mnp-bar"></div>
+            <div class="mnp-bar"></div>
+            <div class="mnp-bar"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+            <span class="live-dot"></span>
+            <span style="font-size:0.65rem;color:rgba(255,255,255,0.3);font-weight:600;text-transform:uppercase;letter-spacing:0.08em;">Live</span>
+        </div>
+        <span class="dur-chip">{_m:02d}:{_s:02d}</span>
+    </div>
+    <div style="height:52px;"></div>
+    """, unsafe_allow_html=True)
+
 # ----------------- VIEW 1: SEARCH SONGS -----------------
 if choice == "Search Songs":
-    st.markdown("<h2 class='text-3xl font-bold mb-4'>Discover Songs</h2>", unsafe_allow_html=True)
+    st.markdown("""
+    <div class="section-header-pill">
+        <span class="pill-icon">🔍</span>
+        <span class="pill-label">Discover Songs</span>
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown("<h2 style='font-size:2rem;font-weight:700;margin-bottom:4px;'>Find Your Next Track</h2>", unsafe_allow_html=True)
+    st.markdown("<p style='color:rgba(255,255,255,0.45);font-size:0.88rem;margin-bottom:20px;'>Search YouTube by song title, artist, album, mood, or paste a URL.</p>", unsafe_allow_html=True)
     
     search_col1, search_col2 = st.columns([8, 2])
     with search_col1:
@@ -962,13 +1241,20 @@ if choice == "Search Songs":
                     st.toast("No results found on YouTube. Try a different query.")
     
     if st.session_state.search_results:
-        st.markdown("<p class='text-sm text-white/50 mb-4'>Top YouTube Search Results:</p>", unsafe_allow_html=True)
+        total_r = len(st.session_state.search_results)
+        st.markdown(f"""
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+            <span style="font-size:0.75rem;color:rgba(255,255,255,0.4);">Showing <strong style="color:rgba(255,255,255,0.7);">{total_r}</strong> result{'s' if total_r!=1 else ''}</span>
+            <span class="info-tag">🎵 YouTube</span>
+        </div>
+        """, unsafe_allow_html=True)
         
         for index, item in enumerate(st.session_state.search_results):
-            card_col1, card_col2, card_col3 = st.columns([1.5, 6, 2.5])
-            
             duration_m, duration_s = divmod(int(item['duration']), 60)
             duration_str = f"{duration_m:02d}:{duration_s:02d}"
+            
+            st.markdown(f"<div class='search-result-card'>", unsafe_allow_html=True)
+            card_col1, card_col2, card_col3 = st.columns([1.5, 6, 2.5])
             
             with card_col1:
                 st.image(item['thumbnail'], width='stretch')
@@ -976,8 +1262,12 @@ if choice == "Search Songs":
             with card_col2:
                 st.markdown(f"""
                 <div style="padding-top: 4px;">
-                    <h4 style="font-size: 1.15rem; font-weight: 600; margin: 0; color: #fff;">{item['title']}</h4>
-                    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin: 2px 0 0 0;">Uploader: {item['uploader']} &nbsp;|&nbsp; Duration: {duration_str}</p>
+                    <h4 style="font-size: 1.1rem; font-weight: 600; margin: 0 0 6px 0; color: #fff; line-height:1.3;">{item['title']}</h4>
+                    <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+                        <span class="genre-pill">🎤 {item['uploader']}</span>
+                        <span class="dur-chip">⏱ {duration_str}</span>
+                        <span class="info-tag">#{index+1}</span>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
@@ -993,9 +1283,8 @@ if choice == "Search Songs":
                         q.append(item)
                         st.session_state.queue = q
                         st.toast("Added to playback queue!")
-                        
-            st.markdown("<div class='song-item-card' style='display:none;'></div>", unsafe_allow_html=True)
-            st.markdown("<hr style='border-color: rgba(255,255,255,0.03); margin: 8px 0;'>", unsafe_allow_html=True)
+            
+            st.markdown("</div>", unsafe_allow_html=True)
 
 # ----------------- VIEW 2: PLAY QUEUE & AI RECOMMENDATIONS -----------------
 elif choice == "Play Queue & AI Recommendations":
