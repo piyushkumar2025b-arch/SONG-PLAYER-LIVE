@@ -699,7 +699,13 @@ def render_player_html(
         let currentTheme = 'rose';
         
         // 2. Initialize App
-        document.addEventListener("DOMContentLoaded", () => {
+        // CRITICAL FIX: In Streamlit's srcdoc iframe, DOMContentLoaded fires BEFORE
+        // the inline <script> tag executes, so addEventListener('DOMContentLoaded')
+        // callback NEVER runs. We use a direct initApp() call instead.
+        function initApp() {
+            if (initApp._done) return;
+            initApp._done = true;
+
             lucide.createIcons();
             initWaveformCanvas();
             // Inject crossfade button next to repeat
@@ -712,14 +718,16 @@ def render_player_html(
                 xBtn.className = 'text-white/40 hover:text-white transition-colors';
                 xBtn.innerHTML = '<i data-lucide="arrow-right-left" class="w-4 h-4"></i>';
                 repeatBtnInit.parentNode.insertBefore(xBtn, repeatBtnInit.nextSibling);
+                lucide.createIcons();
             }
             // If Python already has lyrics, show them immediately
-            // Otherwise kick off client-side fetch right away (Python API calls are blocked server-side)
+            // Otherwise kick off client-side fetch right away
             if (lyricsData && lyricsData.length > 0) {
                 buildLyricsUI();
             } else {
-                // Show loading spinner and immediately fetch from browser (lrclib.net works client-side)
-                document.getElementById('lyrics-scroll-pane').innerHTML = `
+                // Show loading spinner and fetch from browser
+                const pane = document.getElementById('lyrics-scroll-pane');
+                if (pane) pane.innerHTML = `
                     <div class="text-white/40 text-sm py-12 flex flex-col items-center justify-center">
                         <div class="animate-spin w-6 h-6 border-2 border-t-rose-500 border-white/20 rounded-full mb-2"></div>
                         Loading lyrics...
@@ -740,14 +748,13 @@ def render_player_html(
                     targetMouseX = ((e.clientX - rect.left) / rect.width) * 2 - 1;
                     targetMouseY = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
                 });
-                
                 musicPanel.addEventListener('mouseleave', () => {
                     targetMouseX = 0;
                     targetMouseY = 0;
                 });
             }
 
-            // Interactive cursor spotlight with smooth spring physics [PURE ADDITION]
+            // Interactive cursor spotlight
             const glassPanel = document.querySelector('.glass-panel');
             const cursorGlow = document.getElementById('interactive-cursor-glow');
             if (glassPanel && cursorGlow) {
@@ -762,15 +769,17 @@ def render_player_html(
                 });
             }
             
-            // Write active song info to local storage so Streamlit knows what's playing
-            localStorage.setItem('melodify_active_song', JSON.stringify({
-                id: activeVideoId,
-                title: currentSongTitle,
-                uploader: currentSongArtist,
-                duration: currentSongDuration,
-                thumbnail: currentSongThumbnail
-            }));
-        });
+            try {
+                localStorage.setItem('melodify_active_song', JSON.stringify({
+                    id: activeVideoId, title: currentSongTitle,
+                    uploader: currentSongArtist, duration: currentSongDuration,
+                    thumbnail: currentSongThumbnail
+                }));
+            } catch(e) {}
+        }
+        // Also register as fallback in case DOM isn't ready yet
+        document.addEventListener("DOMContentLoaded", initApp);
+        window.addEventListener("load", initApp);
         
         // 3. Load YouTube IFrame API
         const tag = document.createElement('script');
@@ -3085,6 +3094,11 @@ def render_player_html(
 
         // ── Init new features on DOMContentLoaded ─────────────────────────────
         // (merged into the main DOMContentLoaded listener above)
+
+        // GUARANTEED INIT: Call directly at script end - works in Streamlit srcdoc iframes
+        // where DOMContentLoaded has already fired before this script executes.
+        // The _done flag inside initApp() prevents double-initialization.
+        initApp();
     </script>
 </body>
 </html>"""
