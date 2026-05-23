@@ -105,6 +105,16 @@ if "trending_chart" not in st.session_state:
     st.session_state.trending_chart = []
 if "trending_chart_name" not in st.session_state:
     st.session_state.trending_chart_name = ""
+if "collab_messages" not in st.session_state:
+    st.session_state.collab_messages = []
+if "setlist_result" not in st.session_state:
+    st.session_state.setlist_result = None
+if "artist_battle_result" not in st.session_state:
+    st.session_state.artist_battle_result = None
+if "music_timeline" not in st.session_state:
+    st.session_state.music_timeline = None
+if "cover_art_result" not in st.session_state:
+    st.session_state.cover_art_result = None
 
 # Inject Custom CSS for Premium Design & Modern Typography
 st.markdown("""
@@ -1271,7 +1281,7 @@ with st.sidebar:
     
     choice = option_menu(
         menu_title=None,
-        options=["Search Songs", "Play Queue & AI Recommendations", "My Favorites", "Playlists", "Recent Plays", "AI Lyrics Syncer", "📊 Stats", "🌦️ Weather Radio", "💬 Sound Therapist", "🎸 Chord Finder", "🍃 Ambient Mixer", "🧘 Focus Zone", "✨ Sonic Persona", "🎤 Vocal Coach", "🎹 Virtual Piano", "📻 Live Radio", "🏆 Music Trivia", "🌍 World Music", "📝 Song Journal", "🎭 Mood Board", "🎯 Karaoke Studio", "🔬 Song Analyzer", "⚡ BPM Tap Tempo", "🎨 Neon Visualizer", "🧬 Music DNA", "🔥 Trending Now"],
+        options=["Search Songs", "Play Queue & AI Recommendations", "My Favorites", "Playlists", "Recent Plays", "AI Lyrics Syncer", "📊 Stats", "🌦️ Weather Radio", "💬 Sound Therapist", "🎸 Chord Finder", "🍃 Ambient Mixer", "🧘 Focus Zone", "✨ Sonic Persona", "🎤 Vocal Coach", "🎹 Virtual Piano", "📻 Live Radio", "🏆 Music Trivia", "🌍 World Music", "📝 Song Journal", "🎭 Mood Board", "🎯 Karaoke Studio", "🔬 Song Analyzer", "⚡ BPM Tap Tempo", "🎨 Neon Visualizer", "🧬 Music DNA", "🔥 Trending Now", "🤝 Collab Studio", "📋 Setlist Builder", "⚔️ Artist Battle", "🕰️ Music Timeline", "🎬 Cover Art Lab", "🌀 Crossfade Mixer"],
         icons=["search", "list-music", "heart-fill", "music-note-list", "clock-history", "robot", "bar-chart-fill", "cloud-sun-fill", "chat-left-heart-fill", "music-note-beamed", "wind", "hourglass-split", "stars", "mic-fill", "music-note", "broadcast", "trophy-fill", "globe2", "journal-text", "palette2", "camera-reels", "activity", "lightning-charge-fill", "brush-fill", "dna", "fire"],
         menu_icon="cast",
         default_index=0,
@@ -5059,3 +5069,494 @@ Return ONLY valid JSON array (no fences), 10 entries:
                 <p style="font-size:1rem;">Select a chart type and click <strong>Load Trending Chart</strong></p>
             </div>
             """, unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 27: COLLAB STUDIO ═══════════════════════════
+elif choice == "🤝 Collab Studio":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🤝 AI Collab Studio</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Co-write lyrics, melodies, and song concepts with an AI music producer. Brainstorm hooks, verses, and bridges in real time.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='padding:20px;text-align:center;'>⚠️ Add your Gemini API Key in the sidebar to start collaborating.</div>", unsafe_allow_html=True)
+    else:
+        col_cs1, col_cs2 = st.columns([2, 3])
+        with col_cs1:
+            st.markdown("<p style='font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.35);margin-bottom:10px;'>⚙️ Session Settings</p>", unsafe_allow_html=True)
+            collab_genre = st.selectbox("Genre", ["Pop", "Hip-Hop", "R&B", "Rock", "Electronic", "Indie", "Country", "Latin", "Jazz", "Cinematic"], key="collab_genre")
+            collab_mood = st.selectbox("Mood / Vibe", ["Upbeat", "Melancholic", "Dark", "Romantic", "Angry", "Nostalgic", "Euphoric", "Mysterious", "Empowering"], key="collab_mood")
+            collab_theme = st.text_input("Song Theme", placeholder="e.g. late night drives, lost love, winning", key="collab_theme")
+            if st.button("🗑️ Clear Session", key="collab_clear", use_container_width=True):
+                st.session_state.collab_messages = []
+                st.rerun()
+        with col_cs2:
+            st.markdown("<p style='font-size:0.72rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.35);margin-bottom:10px;'>💬 Collab Chat</p>", unsafe_allow_html=True)
+            if not st.session_state.collab_messages:
+                st.markdown(f"""
+                <div class="neon-card-purple" style="margin-bottom:12px;">
+                    <span class="neon-badge neon-badge-purple" style="margin-bottom:8px;display:inline-block;">🎛️ AI Producer</span>
+                    <p style="color:rgba(255,255,255,0.75);font-size:0.88rem;margin:0;line-height:1.6;">
+                        Hey! I'm your AI music producer. Tell me what you're working on — a hook, a verse, a concept — and let's build something incredible together. Genre: <strong>{collab_genre}</strong>, Vibe: <strong>{collab_mood}</strong>.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+            for msg in st.session_state.collab_messages:
+                is_ai = msg["role"] == "assistant"
+                card_class = "neon-card-purple" if is_ai else "neon-card-pink"
+                label = "🎛️ AI Producer" if is_ai else "✍️ You"
+                badge_class = "neon-badge-purple" if is_ai else "neon-badge-pink"
+                st.markdown(f"""
+                <div class="{card_class}" style="margin-bottom:10px;">
+                    <span class="neon-badge {badge_class}" style="margin-bottom:8px;display:inline-block;">{label}</span>
+                    <p style="color:rgba(255,255,255,0.78);font-size:0.86rem;margin:0;line-height:1.7;white-space:pre-wrap;">{msg['content']}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            user_input = st.text_area("Your idea / request", placeholder="e.g. Write me a chorus about chasing dreams at midnight...", height=80, key="collab_input")
+            if st.button("🚀 Send to Producer", use_container_width=True, key="collab_send"):
+                if user_input.strip():
+                    st.session_state.collab_messages.append({"role": "user", "content": user_input.strip()})
+                    history = "\n".join([f"{'Producer' if m['role']=='assistant' else 'Artist'}: {m['content']}" for m in st.session_state.collab_messages[-8:]])
+                    prompt = f"""You are a professional music producer and co-writer. Genre: {collab_genre}. Mood: {collab_mood}. Theme: {collab_theme or 'open'}.
+Conversation so far:
+{history}
+Respond as the producer — write lyrics, suggest structure, offer hooks, provide verse/chorus/bridge. Keep it creative and actionable. Format lyrics clearly with section labels like [Verse 1], [Chorus], etc."""
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    with st.spinner("Producer is writing..."):
+                        try:
+                            res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=20)
+                            if res.status_code == 200:
+                                ans = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                                st.session_state.collab_messages.append({"role": "assistant", "content": ans})
+                                st.rerun()
+                        except Exception as ex:
+                            st.error(f"Error: {ex}")
+
+
+# ═══════════════════════════ VIEW 28: SETLIST BUILDER ═══════════════════════════
+elif choice == "📋 Setlist Builder":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">📋 AI Setlist Builder</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Generate a professionally paced concert setlist for any artist — with energy curves, encore planning, and crowd moment annotations.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='padding:20px;text-align:center;'>⚠️ Add your Gemini API Key to build setlists.</div>", unsafe_allow_html=True)
+    else:
+        col_sb1, col_sb2, col_sb3 = st.columns(3)
+        with col_sb1:
+            setlist_artist = st.text_input("Artist / Band", placeholder="e.g. Arctic Monkeys", key="setlist_artist")
+        with col_sb2:
+            setlist_duration = st.selectbox("Show Length", ["45 min", "60 min", "75 min", "90 min", "120 min", "150 min"], index=3, key="setlist_duration")
+        with col_sb3:
+            setlist_type = st.selectbox("Show Type", ["Club Night", "Festival Slot", "Arena Tour", "Intimate Acoustic", "Best-Of Retrospective", "New Album Promo"], key="setlist_type")
+
+        if st.button("📋 Generate Setlist", use_container_width=True, key="setlist_gen"):
+            if not setlist_artist.strip():
+                st.warning("Enter an artist name first.")
+            else:
+                with st.spinner(f"Programming {setlist_artist}'s setlist..."):
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    prompt = f"""You are a professional concert tour manager. Build a setlist for {setlist_artist} — {setlist_type}, {setlist_duration}.
+Return ONLY valid JSON (no fences):
+{{"artist":"{setlist_artist}","show_type":"{setlist_type}","total_songs":12,"energy_arc":"description of energy flow","setlist":[{{"position":1,"title":"Song","year":"Year","energy":8,"note":"crowd moment annotation","segment":"opener/build/peak/cool-down/encore"}}],"encore":[{{"title":"Song","year":"Year","note":"why it closes the show"}}],"production_tip":"One sentence stage/lighting tip"}}"""
+                    try:
+                        res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=22)
+                        if res.status_code == 200:
+                            raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                            raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                            st.session_state.setlist_result = json.loads(raw)
+                            st.rerun()
+                    except Exception as ex:
+                        st.error(f"Error: {ex}")
+
+        sl = st.session_state.get("setlist_result")
+        if sl:
+            st.markdown(f"""
+            <div class="neon-card-cyan neon-scanlines" style="margin-bottom:20px;">
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+                    <div>
+                        <div class="neon-text-cyan" style="font-size:1.4rem;font-weight:800;">{sl.get('artist','')}</div>
+                        <div style="color:rgba(255,255,255,0.4);font-size:0.8rem;margin-top:2px;">{sl.get('show_type','')} · {sl.get('total_songs',0)} songs</div>
+                    </div>
+                    <span class="neon-badge neon-badge-cyan">⚡ {sl.get('energy_arc','')[:40]}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            seg_colors = {"opener":"#f43f5e","build":"#f97316","peak":"#a855f7","cool-down":"#06b6d4","encore":"#22c55e"}
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>🎵 Main Set</p>", unsafe_allow_html=True)
+            for track in sl.get("setlist", []):
+                seg = track.get("segment","build")
+                col = seg_colors.get(seg, "#a855f7")
+                energy = track.get("energy", 5)
+                energy_bar = "█" * energy + "░" * (10 - energy)
+                tc1, tc2 = st.columns([6, 4])
+                with tc1:
+                    st.markdown(f"""
+                    <div style="display:flex;align-items:center;gap:12px;background:rgba(8,4,18,0.7);border:1px solid {col}44;border-left:3px solid {col};border-radius:0 10px 10px 0;padding:10px 14px;margin-bottom:6px;box-shadow:0 0 8px {col}22;">
+                        <span style="font-size:1rem;font-weight:800;color:{col};min-width:24px;text-shadow:0 0 8px {col};">{track.get('position','')}</span>
+                        <div style="flex:1;overflow:hidden;">
+                            <p style="font-weight:700;font-size:0.9rem;color:#fff;margin:0;">{track.get('title','')}</p>
+                            <p style="font-size:0.7rem;color:rgba(255,255,255,0.4);margin:0;">{track.get('year','')} · <span style="color:{col};">{seg}</span></p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with tc2:
+                    st.markdown(f"""
+                    <div style="padding-top:8px;">
+                        <p style="font-size:0.62rem;color:rgba(255,255,255,0.3);font-family:monospace;margin:0 0 3px 0;">Energy <span style="color:{col};">{energy}/10</span></p>
+                        <p style="font-size:0.62rem;font-family:monospace;color:{col};margin:0 0 4px 0;">{energy_bar}</p>
+                        <p style="font-size:0.68rem;font-style:italic;color:rgba(255,255,255,0.4);margin:0;">{track.get('note','')}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+            st.markdown("<div class='neon-sweep'></div>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>🎤 Encore</p>", unsafe_allow_html=True)
+            for et in sl.get("encore", []):
+                st.markdown(f"""
+                <div class="neon-card-green" style="margin-bottom:8px;">
+                    <p style="font-weight:700;font-size:0.9rem;color:#4ade80;margin:0 0 3px 0;">🎤 {et.get('title','')} <span style="color:rgba(255,255,255,0.3);font-size:0.75rem;font-weight:400;">({et.get('year','')})</span></p>
+                    <p style="font-size:0.76rem;color:rgba(255,255,255,0.5);margin:0;">{et.get('note','')}</p>
+                </div>
+                """, unsafe_allow_html=True)
+            st.markdown(f"<div class='neon-card-orange' style='margin-top:8px;'><span class='neon-badge neon-badge-cyan' style='margin-bottom:6px;display:inline-block;'>💡 Production Tip</span><p style='color:rgba(255,255,255,0.7);font-size:0.85rem;margin:0;'>{sl.get('production_tip','')}</p></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("""<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,0.25);">
+                <div style="font-size:3.5rem;margin-bottom:14px;">📋</div>
+                <p>Enter an artist and click <strong>Generate Setlist</strong></p>
+            </div>""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 29: ARTIST BATTLE ═══════════════════════════
+elif choice == "⚔️ Artist Battle":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">⚔️ Artist Battle Arena</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Pit two artists head-to-head across 8 musical dimensions. AI judges every round.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='padding:20px;text-align:center;'>⚠️ Add your Gemini API Key to start battles.</div>", unsafe_allow_html=True)
+    else:
+        col_ab1, col_ab2, col_ab3 = st.columns([2, 0.3, 2])
+        with col_ab1:
+            artist1 = st.text_input("🔴 Artist 1", placeholder="e.g. Taylor Swift", key="battle_a1")
+        with col_ab2:
+            st.markdown("<div style='text-align:center;padding-top:32px;font-size:1.4rem;color:rgba(255,255,255,0.2);font-weight:900;'>VS</div>", unsafe_allow_html=True)
+        with col_ab3:
+            artist2 = st.text_input("🔵 Artist 2", placeholder="e.g. Beyoncé", key="battle_a2")
+
+        if st.button("⚔️ Start Battle", use_container_width=True, key="battle_go"):
+            if not artist1.strip() or not artist2.strip():
+                st.warning("Enter both artist names.")
+            else:
+                with st.spinner(f"Judging {artist1} vs {artist2}..."):
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    prompt = f"""You are an expert music critic and judge. Compare {artist1} vs {artist2} across 8 musical dimensions.
+Return ONLY valid JSON (no fences):
+{{"artist1":"{artist1}","artist2":"{artist2}","rounds":[{{"dimension":"Vocal Range","a1_score":8,"a2_score":7,"a1_note":"brief","a2_note":"brief","winner":"artist1"}}],"final_winner":"artist name","final_verdict":"2 sentence verdict","a1_strengths":["s1","s2","s3"],"a2_strengths":["s1","s2","s3"]}}
+Provide all 8 rounds for: Vocal Range, Lyricism, Stage Presence, Commercial Impact, Critical Acclaim, Discography Depth, Innovation, Cultural Impact."""
+                    try:
+                        res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=25)
+                        if res.status_code == 200:
+                            raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                            raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                            st.session_state.artist_battle_result = json.loads(raw)
+                            st.rerun()
+                    except Exception as ex:
+                        st.error(f"Error: {ex}")
+
+        br = st.session_state.get("artist_battle_result")
+        if br:
+            a1_wins = sum(1 for r in br.get("rounds",[]) if r.get("winner") == "artist1")
+            a2_wins = sum(1 for r in br.get("rounds",[]) if r.get("winner") == "artist2")
+            winner = br.get("final_winner","")
+            st.markdown(f"""
+            <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:16px;margin-bottom:22px;align-items:center;">
+                <div class="neon-card-pink" style="text-align:center;">
+                    <div class="neon-text-pink" style="font-size:1.5rem;font-weight:800;">{br.get('artist1','')}</div>
+                    <div style="font-size:3rem;font-weight:900;color:#f43f5e;text-shadow:0 0 20px rgba(244,63,94,0.7);">{a1_wins}</div>
+                    <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);">rounds won</div>
+                </div>
+                <div style="text-align:center;font-size:1.8rem;font-weight:900;color:rgba(255,255,255,0.15);">⚔️</div>
+                <div class="neon-card-purple" style="text-align:center;">
+                    <div class="neon-text-purple" style="font-size:1.5rem;font-weight:800;">{br.get('artist2','')}</div>
+                    <div style="font-size:3rem;font-weight:900;color:#a855f7;text-shadow:0 0 20px rgba(168,85,247,0.7);">{a2_wins}</div>
+                    <div style="font-size:0.7rem;color:rgba(255,255,255,0.35);">rounds won</div>
+                </div>
+            </div>
+            <div class="neon-card-cyan neon-scanlines" style="text-align:center;margin-bottom:22px;">
+                <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.3);margin-bottom:6px;">🏆 WINNER</div>
+                <div class="neon-text-cyan" style="font-size:2rem;font-weight:900;">{winner}</div>
+                <p style="color:rgba(255,255,255,0.55);font-size:0.85rem;margin:10px 0 0 0;font-style:italic;">{br.get('final_verdict','')}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:12px;'>📊 Round-by-Round Breakdown</p>", unsafe_allow_html=True)
+            for rnd in br.get("rounds", []):
+                w = rnd.get("winner","")
+                s1, s2 = rnd.get("a1_score",5), rnd.get("a2_score",5)
+                w_col = "#f43f5e" if w == "artist1" else "#a855f7"
+                rc1, rc2, rc3 = st.columns([3, 1, 3])
+                with rc1:
+                    st.markdown(f"<div style='text-align:right;padding:8px 12px;background:rgba(244,63,94,0.05);border-right:2px solid rgba(244,63,94,0.2);border-radius:8px 0 0 8px;'><span style='font-size:1.1rem;font-weight:700;color:#f43f5e;'>{s1}</span><span style='font-size:0.72rem;color:rgba(255,255,255,0.4);display:block;'>{rnd.get('a1_note','')}</span></div>", unsafe_allow_html=True)
+                with rc2:
+                    st.markdown(f"<div style='text-align:center;padding:8px 0;'><span style='font-size:0.65rem;font-weight:700;color:{w_col};text-transform:uppercase;'>{rnd.get('dimension','')}</span></div>", unsafe_allow_html=True)
+                with rc3:
+                    st.markdown(f"<div style='padding:8px 12px;background:rgba(168,85,247,0.05);border-left:2px solid rgba(168,85,247,0.2);border-radius:0 8px 8px 0;'><span style='font-size:1.1rem;font-weight:700;color:#a855f7;'>{s2}</span><span style='font-size:0.72rem;color:rgba(255,255,255,0.4);display:block;'>{rnd.get('a2_note','')}</span></div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:4px;'></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("""<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,0.25);">
+                <div style="font-size:3.5rem;margin-bottom:14px;">⚔️</div>
+                <p>Enter two artists and click <strong>Start Battle</strong></p>
+            </div>""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 30: MUSIC TIMELINE ═══════════════════════════
+elif choice == "🕰️ Music Timeline":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🕰️ Music History Timeline</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Explore any artist's or genre's full discography and cultural evolution as an interactive neon timeline.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='padding:20px;text-align:center;'>⚠️ Add your Gemini API Key to build timelines.</div>", unsafe_allow_html=True)
+    else:
+        col_tl1, col_tl2 = st.columns([3, 2])
+        with col_tl1:
+            tl_subject = st.text_input("Artist, Band, or Genre", placeholder="e.g. David Bowie / Hip-Hop / Punk Rock", key="timeline_subject")
+        with col_tl2:
+            tl_focus = st.selectbox("Focus", ["Albums & Singles", "Cultural Impact", "Genre Evolution", "Artist Career Arc", "Collaborations"], key="timeline_focus")
+
+        if st.button("🕰️ Build Timeline", use_container_width=True, key="timeline_build"):
+            if not tl_subject.strip():
+                st.warning("Enter a subject.")
+            else:
+                with st.spinner(f"Assembling timeline for {tl_subject}..."):
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    prompt = f"""Build a music history timeline for: "{tl_subject}" focused on "{tl_focus}".
+Return ONLY valid JSON (no fences):
+{{"subject":"{tl_subject}","focus":"{tl_focus}","summary":"2-sentence overview","events":[{{"year":"1975","title":"Event/Album title","description":"2 sentences","impact":"High/Medium/Low","type":"album/single/event/milestone/collaboration","color":"#hex neon color"}}]}}
+Include 10-14 events in chronological order."""
+                    try:
+                        res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=25)
+                        if res.status_code == 200:
+                            raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                            raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                            st.session_state.music_timeline = json.loads(raw)
+                            st.rerun()
+                    except Exception as ex:
+                        st.error(f"Error: {ex}")
+
+        tl = st.session_state.get("music_timeline")
+        if tl:
+            st.markdown(f"""
+            <div class="neon-card-purple" style="margin-bottom:20px;">
+                <div class="neon-text-purple" style="font-size:1.4rem;font-weight:800;margin-bottom:6px;">{tl.get('subject','')} — {tl.get('focus','')}</div>
+                <p style="color:rgba(255,255,255,0.55);font-size:0.86rem;margin:0;">{tl.get('summary','')}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            type_icons = {"album":"💿","single":"🎵","event":"⚡","milestone":"🏆","collaboration":"🤝"}
+            impact_size = {"High":"1rem","Medium":"0.88rem","Low":"0.78rem"}
+            for i, ev in enumerate(tl.get("events", [])):
+                ev_color = ev.get("color","#a855f7")
+                icon = type_icons.get(ev.get("type","event"), "🎵")
+                side = i % 2 == 0
+                imp = ev.get("impact","Medium")
+                imp_fs = impact_size.get(imp, "0.88rem")
+                ev_col1, ev_col2, ev_col3 = st.columns([2, 0.2, 8] if side else [8, 0.2, 2])
+                if side:
+                    with ev_col1:
+                        st.markdown(f"<div style='text-align:right;padding-top:8px;'><span style='font-size:1.1rem;font-weight:800;color:{ev_color};text-shadow:0 0 10px {ev_color};'>{ev.get('year','')}</span></div>", unsafe_allow_html=True)
+                    with ev_col2:
+                        st.markdown(f"<div style='display:flex;flex-direction:column;align-items:center;padding-top:2px;'><div style='width:12px;height:12px;border-radius:50%;background:{ev_color};box-shadow:0 0 10px {ev_color};margin-bottom:2px;'></div><div style='width:1px;background:linear-gradient({ev_color},transparent);flex:1;min-height:40px;'></div></div>", unsafe_allow_html=True)
+                    with ev_col3:
+                        st.markdown(f"<div style='background:rgba(8,4,18,0.8);border:1px solid {ev_color}55;border-left:3px solid {ev_color};border-radius:0 12px 12px 0;padding:12px 16px;margin-bottom:12px;box-shadow:0 0 10px {ev_color}22;'><p style='font-size:{imp_fs};font-weight:700;color:#fff;margin:0 0 4px 0;'>{icon} {ev.get('title','')}</p><p style='font-size:0.78rem;color:rgba(255,255,255,0.55);margin:0 0 4px 0;'>{ev.get('description','')}</p><span class='neon-badge' style='background:{ev_color}18;border:1px solid {ev_color}44;color:{ev_color};box-shadow:0 0 6px {ev_color}44;font-size:0.6rem;padding:2px 8px;border-radius:20px;'>{imp} Impact</span></div>", unsafe_allow_html=True)
+                else:
+                    with ev_col1:
+                        st.markdown(f"<div style='background:rgba(8,4,18,0.8);border:1px solid {ev_color}55;border-right:3px solid {ev_color};border-radius:12px 0 0 12px;padding:12px 16px;margin-bottom:12px;box-shadow:0 0 10px {ev_color}22;'><p style='font-size:{imp_fs};font-weight:700;color:#fff;margin:0 0 4px 0;'>{icon} {ev.get('title','')}</p><p style='font-size:0.78rem;color:rgba(255,255,255,0.55);margin:0 0 4px 0;'>{ev.get('description','')}</p><span class='neon-badge' style='background:{ev_color}18;border:1px solid {ev_color}44;color:{ev_color};box-shadow:0 0 6px {ev_color}44;font-size:0.6rem;padding:2px 8px;border-radius:20px;'>{imp} Impact</span></div>", unsafe_allow_html=True)
+                    with ev_col2:
+                        st.markdown(f"<div style='display:flex;flex-direction:column;align-items:center;padding-top:2px;'><div style='width:12px;height:12px;border-radius:50%;background:{ev_color};box-shadow:0 0 10px {ev_color};margin-bottom:2px;'></div><div style='width:1px;background:linear-gradient({ev_color},transparent);flex:1;min-height:40px;'></div></div>", unsafe_allow_html=True)
+                    with ev_col3:
+                        st.markdown(f"<div style='text-align:left;padding-top:8px;'><span style='font-size:1.1rem;font-weight:800;color:{ev_color};text-shadow:0 0 10px {ev_color};'>{ev.get('year','')}</span></div>", unsafe_allow_html=True)
+        else:
+            st.markdown("""<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,0.25);">
+                <div style="font-size:3.5rem;margin-bottom:14px;">🕰️</div>
+                <p>Enter an artist or genre and click <strong>Build Timeline</strong></p>
+            </div>""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 31: COVER ART LAB ═══════════════════════════
+elif choice == "🎬 Cover Art Lab":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🎬 Cover Art Lab</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">AI generates detailed visual prompts, colour palettes, and art direction briefs for album or single cover art.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='padding:20px;text-align:center;'>⚠️ Add your Gemini API Key to use Cover Art Lab.</div>", unsafe_allow_html=True)
+    else:
+        col_ca1, col_ca2 = st.columns(2)
+        with col_ca1:
+            ca_title = st.text_input("Album / Single Title", placeholder="e.g. Midnight Reverie", key="ca_title")
+            ca_artist = st.text_input("Artist Name", placeholder="e.g. Luna Vex", key="ca_artist")
+            ca_genre = st.selectbox("Genre", ["Pop", "Hip-Hop", "Electronic", "Rock", "R&B", "Indie", "Jazz", "Metal", "Classical", "Ambient"], key="ca_genre")
+        with col_ca2:
+            ca_style = st.selectbox("Visual Style", ["Cyberpunk Neon", "Minimalist", "Abstract Expressionist", "Vintage Analog", "Surrealist", "Dark Academia", "Vaporwave", "Psychedelic", "Photorealistic", "Brutalist"], key="ca_style")
+            ca_mood = st.selectbox("Emotional Tone", ["Euphoric", "Melancholic", "Powerful", "Dreamy", "Dark", "Nostalgic", "Defiant", "Romantic", "Mysterious"], key="ca_mood")
+            ca_format = st.radio("Format", ["Album Cover (Square)", "Single Cover", "EP Cover", "Tour Poster"], horizontal=True, key="ca_format")
+
+        if st.button("🎨 Generate Art Direction", use_container_width=True, key="ca_gen"):
+            if not ca_title.strip():
+                st.warning("Enter a title.")
+            else:
+                with st.spinner("Art director is conceptualising..."):
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    prompt = f"""You are a world-class album art director. Create a complete cover art brief for:
+Title: "{ca_title}" by {ca_artist or 'Unknown Artist'} | Genre: {ca_genre} | Style: {ca_style} | Mood: {ca_mood} | Format: {ca_format}
+Return ONLY valid JSON (no fences):
+{{"title":"{ca_title}","concept":"3-sentence visual concept","palette":[{{"hex":"#hex","name":"color name","role":"how it's used"}}],"composition":"detailed layout description","focal_element":"main visual subject","typography_style":"font/text treatment suggestion","texture_details":"surface/material textures","lighting":"lighting direction and quality","ai_image_prompt":"A detailed 100-word prompt ready to paste into Midjourney or DALL-E","dont_use":["element to avoid 1","element to avoid 2","element to avoid 3"],"inspiration_refs":["Reference artwork/artist 1","Ref 2","Ref 3"]}}
+Include 5 palette colors."""
+                    try:
+                        res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=22)
+                        if res.status_code == 200:
+                            raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                            raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                            st.session_state.cover_art_result = json.loads(raw)
+                            st.rerun()
+                    except Exception as ex:
+                        st.error(f"Error: {ex}")
+
+        ca = st.session_state.get("cover_art_result")
+        if ca:
+            st.markdown(f"""
+            <div class="neon-card-pink neon-scanlines" style="margin-bottom:20px;">
+                <div class="neon-text-pink" style="font-size:1.3rem;font-weight:800;margin-bottom:6px;">🎨 {ca.get('title','')}</div>
+                <p style="color:rgba(255,255,255,0.65);font-size:0.88rem;line-height:1.6;margin:0;">{ca.get('concept','')}</p>
+            </div>
+            """, unsafe_allow_html=True)
+            col_pal, col_comp = st.columns(2)
+            with col_pal:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>🎨 Colour Palette</p>", unsafe_allow_html=True)
+                for c in ca.get("palette", []):
+                    hx = c.get("hex","#333")
+                    st.markdown(f"""
+                    <div style="display:flex;align-items:center;gap:12px;background:rgba(8,4,18,0.6);border:1px solid {hx}44;border-radius:10px;padding:8px 12px;margin-bottom:6px;">
+                        <div style="width:36px;height:36px;border-radius:8px;background:{hx};box-shadow:0 0 10px {hx}88;flex-shrink:0;"></div>
+                        <div>
+                            <p style="font-weight:700;font-size:0.82rem;color:#fff;margin:0;">{c.get('name','')}</p>
+                            <p style="font-size:0.68rem;color:rgba(255,255,255,0.4);margin:0;font-family:monospace;">{hx} · {c.get('role','')}</p>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            with col_comp:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>🖼️ Composition Details</p>", unsafe_allow_html=True)
+                for label, val in [("📐 Layout", ca.get('composition','')), ("🎯 Focal Element", ca.get('focal_element','')), ("✍️ Typography", ca.get('typography_style','')), ("🔆 Lighting", ca.get('lighting','')), ("🪨 Textures", ca.get('texture_details',''))]:
+                    st.markdown(f"<div style='background:rgba(8,4,18,0.6);border:1px solid rgba(255,255,255,0.06);border-radius:10px;padding:8px 12px;margin-bottom:6px;'><p style='font-size:0.65rem;color:rgba(255,255,255,0.3);margin:0 0 2px 0;'>{label}</p><p style='font-size:0.8rem;color:rgba(255,255,255,0.7);margin:0;'>{val}</p></div>", unsafe_allow_html=True)
+            st.markdown("<div class='neon-sweep'></div>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:8px;'>🤖 AI Image Generation Prompt</p>", unsafe_allow_html=True)
+            st.markdown(f"""
+            <div class="neon-card-cyan" style="margin-bottom:14px;">
+                <p style="font-size:0.85rem;color:rgba(255,255,255,0.75);line-height:1.7;margin:0;font-style:italic;">"{ca.get('ai_image_prompt','')}"</p>
+            </div>
+            """, unsafe_allow_html=True)
+            col_ref, col_avoid = st.columns(2)
+            with col_ref:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:8px;'>💡 Inspiration References</p>", unsafe_allow_html=True)
+                for ref in ca.get("inspiration_refs", []):
+                    st.markdown(f"<p style='color:rgba(255,255,255,0.55);font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);margin:0;'>🎨 {ref}</p>", unsafe_allow_html=True)
+            with col_avoid:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:8px;'>🚫 Avoid</p>", unsafe_allow_html=True)
+                for av in ca.get("dont_use", []):
+                    st.markdown(f"<p style='color:rgba(244,63,94,0.6);font-size:0.8rem;padding:3px 0;border-bottom:1px solid rgba(255,255,255,0.04);margin:0;'>✗ {av}</p>", unsafe_allow_html=True)
+        else:
+            st.markdown("""<div style="text-align:center;padding:50px 20px;color:rgba(255,255,255,0.25);">
+                <div style="font-size:3.5rem;margin-bottom:14px;">🎨</div>
+                <p>Fill in the details above and click <strong>Generate Art Direction</strong></p>
+            </div>""", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 32: CROSSFADE MIXER ═══════════════════════════
+elif choice == "🌀 Crossfade Mixer":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🌀 Crossfade Mixer</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Visually arrange your queue into a DJ-style crossfade set. Drag tracks, set transition times, and export as an ordered playlist.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    cf_queue = st.session_state.get("queue", [])
+    if not cf_queue:
+        st.markdown("""
+        <div class="neon-card-purple" style="text-align:center;padding:30px;">
+            <div style="font-size:3rem;margin-bottom:12px;">🎵</div>
+            <p style="color:rgba(255,255,255,0.5);">Your play queue is empty. Go to <strong>Search Songs</strong> and add tracks to the queue first.</p>
+        </div>
+        """, unsafe_allow_html=True)
+    else:
+        st.markdown(f"<p style='color:rgba(255,255,255,0.4);font-size:0.8rem;margin-bottom:16px;'>{len(cf_queue)} tracks in queue — set crossfade time for each transition below</p>", unsafe_allow_html=True)
+
+        crossfade_html_tracks = ""
+        for i, track in enumerate(cf_queue):
+            m, s = divmod(int(track.get('duration', 180)), 60)
+            crossfade_html_tracks += f"""
+            <div class="cf-track" id="cf-{i}">
+                <img src="{track.get('thumbnail','')}" class="cf-thumb" onerror="this.style.background='#1a0a2e'">
+                <div class="cf-info">
+                    <p class="cf-title">{track.get('title','')[:38]}{'…' if len(track.get('title',''))>38 else ''}</p>
+                    <p class="cf-artist">{track.get('uploader','')}</p>
+                </div>
+                <span class="cf-dur">{m:02d}:{s:02d}</span>
+                <div class="cf-num">{i+1}</div>
+            </div>
+            {"<div class='cf-arrow'>⬇ Crossfade <span class='cf-fade-val' id='fade-val-" + str(i) + "'>3s</span> <input type='range' class='cf-slider' min='1' max='10' value='3' oninput=\"document.getElementById('fade-val-" + str(i) + "').innerText=this.value+'s'\" title='Crossfade duration'></div>" if i < len(cf_queue)-1 else ""}
+            """
+
+        mixer_html = f"""<!DOCTYPE html><html><head><meta charset="UTF-8">
+        <style>
+        *{{box-sizing:border-box;margin:0;padding:0;}}
+        body{{font-family:'Outfit',sans-serif;background:transparent;color:#f3f4f6;padding:8px;}}
+        .cf-track{{display:flex;align-items:center;gap:12px;background:rgba(8,4,18,0.8);
+            border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:10px 14px;margin-bottom:4px;transition:all 0.2s;}}
+        .cf-track:hover{{border-color:rgba(168,85,247,0.5);box-shadow:0 0 12px rgba(168,85,247,0.2);transform:translateX(3px);}}
+        .cf-thumb{{width:40px;height:40px;border-radius:7px;object-fit:cover;border:1px solid rgba(168,85,247,0.3);flex-shrink:0;background:#1a0a2e;}}
+        .cf-info{{flex:1;overflow:hidden;}}
+        .cf-title{{font-size:0.82rem;font-weight:700;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;}}
+        .cf-artist{{font-size:0.68rem;color:rgba(255,255,255,0.4);margin:0;}}
+        .cf-dur{{font-size:0.68rem;font-family:monospace;color:rgba(255,255,255,0.3);flex-shrink:0;}}
+        .cf-num{{width:22px;height:22px;border-radius:50%;background:rgba(168,85,247,0.15);border:1px solid rgba(168,85,247,0.3);
+            display:flex;align-items:center;justify-content:center;font-size:0.6rem;font-weight:700;color:#c084fc;flex-shrink:0;}}
+        .cf-arrow{{text-align:center;font-size:0.7rem;color:rgba(255,255,255,0.3);padding:4px 0;display:flex;align-items:center;justify-content:center;gap:10px;}}
+        .cf-fade-val{{color:#22d3ee;font-weight:700;}}
+        .cf-slider{{-webkit-appearance:none;width:100px;height:4px;border-radius:2px;background:rgba(6,182,212,0.2);outline:none;}}
+        .cf-slider::-webkit-slider-thumb{{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#06b6d4;box-shadow:0 0 6px rgba(6,182,212,0.5);cursor:pointer;}}
+        </style></head><body>
+        <div id="cf-container">{crossfade_html_tracks}</div>
+        </body></html>"""
+
+        components.html(mixer_html, height=min(64 * len(cf_queue) + 60, 600))
+
+        col_cx1, col_cx2, col_cx3 = st.columns(3)
+        with col_cx1:
+            if st.button("🔀 Shuffle Order", use_container_width=True, key="cf_shuffle"):
+                import random
+                random.shuffle(st.session_state.queue)
+                st.toast("Crossfade order shuffled!")
+                st.rerun()
+        with col_cx2:
+            if st.button("⚡ Play First Track", use_container_width=True, key="cf_play_first"):
+                if cf_queue:
+                    play_song(cf_queue[0])
+        with col_cx3:
+            if st.button("🗑️ Clear Queue", use_container_width=True, key="cf_clear"):
+                st.session_state.queue = []
+                st.session_state.queue_index = 0
+                st.toast("Queue cleared!")
+                st.rerun()
