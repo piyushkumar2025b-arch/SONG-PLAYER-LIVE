@@ -580,6 +580,50 @@ def render_player_html(
         // ── NEW: Crossfade state ──────────────────────────────────────────────
         let crossfadeActive = false;
         let crossfadeTimer = null;
+
+        // ── STREAMLIT IFRAME FIX: Manual time tracker ────────────────────────
+        // Streamlit's nested iframe breaks YT postMessage bridge, so
+        // getCurrentTime() always returns 0. We track time ourselves.
+        let manualTimeStart = null;   // Date.now() when play started
+        let manualTimeOffset = 0;     // seeked-to position in seconds
+        let manualTimePaused = true;
+        
+        function getPlayerTime() {
+            // Try YT API first - if it returns >0, it's working fine
+            if (player && typeof player.getCurrentTime === 'function') {
+                try {
+                    const ytTime = player.getCurrentTime();
+                    if (ytTime > 0) {
+                        // YT API working - sync our manual tracker
+                        manualTimeOffset = ytTime;
+                        if (!manualTimePaused) manualTimeStart = Date.now();
+                        return ytTime;
+                    }
+                } catch(e) {}
+            }
+            // Fallback: use manual timer
+            if (manualTimePaused || manualTimeStart === null) return manualTimeOffset;
+            const elapsed = (Date.now() - manualTimeStart) / 1000;
+            return Math.min(manualTimeOffset + elapsed, currentSongDuration || 9999);
+        }
+
+        function manualPlay(seekPos) {
+            if (seekPos !== undefined) manualTimeOffset = seekPos;
+            manualTimeStart = Date.now();
+            manualTimePaused = false;
+        }
+
+        function manualPause() {
+            if (!manualTimePaused) {
+                manualTimeOffset = getPlayerTime();
+                manualTimePaused = true;
+            }
+        }
+
+        function manualSeek(pos) {
+            manualTimeOffset = pos;
+            if (!manualTimePaused) manualTimeStart = Date.now();
+        }
         
         // 2D Visualizer variables
         let canvas, ctx;
@@ -761,7 +805,6 @@ def render_player_html(
             
             // NOTE: Browsers block autoplay inside iframes without a direct user gesture.
             // We do NOT call player.playVideo() here — user must click play.
-            // Removing the silent-fail autoplay is what makes the player actually work.
             
             setTimeout(() => {
                 const duration = player.getDuration();
@@ -777,6 +820,34 @@ def render_player_html(
                     setTimeout(() => playBtn.classList.remove('animate-pulse'), 2000);
                 }
             }, 800);
+
+            // ── Streamlit iframe postMessage bridge fallback ─────────────────────
+            // When Streamlit nests this component, YT.PlayerState events may fire
+            // but getCurrentTime() returns 0 because the postMessage pipe is throttled.
+            // This watchdog polls every 250ms: if the player says it's playing but
+            // our manual timer isn't running, kick it off. Also syncs play/pause icon.
+            setInterval(() => {
+                if (!player) return;
+                let ytState = -1;
+                try { ytState = player.getPlayerState(); } catch(e) {}
+                const ytPlaying = (typeof YT !== 'undefined' && ytState === YT.PlayerState.PLAYING);
+
+                if (ytPlaying && !isPlaying) {
+                    // YT is playing but we didn't catch the state change
+                    isPlaying = true;
+                    manualPlay();
+                    const pi = document.getElementById('play-icon');
+                    if (pi) { pi.setAttribute('data-lucide', 'pause'); lucide.createIcons(); }
+                    startLyricsSync();
+                } else if (!ytPlaying && ytState === 2 && isPlaying) {
+                    // Paused (state 2) but we think we're playing
+                    isPlaying = false;
+                    manualPause();
+                    const pi = document.getElementById('play-icon');
+                    if (pi) { pi.setAttribute('data-lucide', 'play'); lucide.createIcons(); }
+                    stopLyricsSync();
+                }
+            }, 250);
         }
         
         function onPlayerStateChange(event) {
@@ -784,17 +855,20 @@ def render_player_html(
             
             if (event.data === YT.PlayerState.PLAYING) {
                 isPlaying = true;
+                manualPlay();
                 playIcon.setAttribute('data-lucide', 'pause');
                 lucide.createIcons();
                 startLyricsSync();
             } else if (event.data === YT.PlayerState.ENDED) {
                 isPlaying = false;
+                manualPause();
                 playIcon.setAttribute('data-lucide', 'play');
                 lucide.createIcons();
                 stopLyricsSync();
                 handleSongEnded();
             } else {
                 isPlaying = false;
+                manualPause();
                 playIcon.setAttribute('data-lucide', 'play');
                 lucide.createIcons();
                 stopLyricsSync();
@@ -1255,30 +1329,48 @@ def render_player_html(
         // 5. Playback Helpers
         function togglePlayState() {
             if (!player) return;
-            const state = player.getPlayerState();
-            if (state === YT.PlayerState.PLAYING) {
+            // Use our isPlaying flag as fallback since YT.getPlayerState()
+            // may return -1/-2 when postMessage bridge is broken in Streamlit iframe
+            let state = -1;
+            try { state = player.getPlayerState(); } catch(e) {}
+            const ytSaysPlaying = (typeof YT !== 'undefined' && state === YT.PlayerState.PLAYING);
+            
+            if (ytSaysPlaying || isPlaying) {
                 player.pauseVideo();
+                isPlaying = false;
+                manualPause();
+                const playIcon = document.getElementById('play-icon');
+                if (playIcon) { playIcon.setAttribute('data-lucide', 'pause'); lucide.createIcons(); }
+                stopLyricsSync();
             } else {
                 player.playVideo();
+                isPlaying = true;
+                manualPlay();
+                const playIcon = document.getElementById('play-icon');
+                if (playIcon) { playIcon.setAttribute('data-lucide', 'pause'); lucide.createIcons(); }
+                startLyricsSync();
             }
         }
         
         function skipTime(seconds) {
             if (!player) return;
-            const curTime = player.getCurrentTime();
+            const curTime = getPlayerTime();
             const duration = player.getDuration() || currentSongDuration;
             let targetTime = curTime + seconds;
             if (targetTime < 0) targetTime = 0;
             if (targetTime > duration) targetTime = duration;
             
             player.seekTo(targetTime, true);
+            manualSeek(targetTime);
             updateProgressBar(targetTime);
         }
         
         function onProgressSeek(value) {
             if (!player) return;
-            player.seekTo(parseFloat(value), true);
-            updateProgressBar(parseFloat(value));
+            const t = parseFloat(value);
+            player.seekTo(t, true);
+            manualSeek(t);
+            updateProgressBar(t);
         }
         
         function onVolumeChange(value) {
@@ -1372,6 +1464,7 @@ def render_player_html(
         function seekToLyricTime(time) {
             if (!player) return;
             player.seekTo(time + 0.05, true);
+            manualSeek(time + 0.05);
             updateProgressBar(time);
             syncLyricsNow();
         }
@@ -1380,7 +1473,7 @@ def render_player_html(
             stopLyricsSync();
             lyricsInterval = setInterval(() => {
                 if (!player) return;
-                const curTime = player.getCurrentTime();
+                const curTime = getPlayerTime();
                 updateProgressBar(curTime);
                 syncLyrics(curTime);
                 // Write current playback time so Karaoke Studio iframe can sync
@@ -1483,7 +1576,7 @@ def render_player_html(
             
             if (player) {
                 currentLyricIndex = -1;
-                syncLyrics(player.getCurrentTime());
+                syncLyrics(getPlayerTime());
             }
         }
         
@@ -1504,7 +1597,7 @@ def render_player_html(
             
             if (player) {
                 currentLyricIndex = -1;
-                syncLyrics(player.getCurrentTime());
+                syncLyrics(getPlayerTime());
             }
         }
         
@@ -1682,7 +1775,7 @@ def render_player_html(
         
         function syncLyricsNow() {
             if (player) {
-                syncLyrics(player.getCurrentTime());
+                syncLyrics(getPlayerTime());
             }
         }
         
@@ -1877,7 +1970,7 @@ def render_player_html(
             
             syncLyricsNow();
             // Repaint waveform scrubber with new theme colour
-            if (player) drawWaveformScrubber((player.getCurrentTime()||0) / (currentSongDuration||1));
+            if (player) drawWaveformScrubber((getPlayerTime()||0) / (currentSongDuration||1));
         }
         
         function setEqualizerPreset(preset) {
@@ -2655,7 +2748,7 @@ def render_player_html(
             if (currentLyricIndex !== -1 && lyricEffect === 'karaoke' && player) {
                 const activeEl = document.getElementById(`lyric-line-${currentLyricIndex}`);
                 if (activeEl) {
-                    const curTime = player.getCurrentTime();
+                    const curTime = getPlayerTime();
                     const adjustedTime = curTime + lyricsSyncOffset;
                     
                     let duration = 4.0;
@@ -2968,7 +3061,7 @@ def render_player_html(
         // Detects when < 8s remain and fades out then loads next
         function checkCrossfade() {
             if (!player || !crossfadeActive || !isPlaying) return;
-            const remaining = (player.getDuration() || currentSongDuration) - player.getCurrentTime();
+            const remaining = (player.getDuration() || currentSongDuration) - getPlayerTime();
             if (remaining < 8 && remaining > 0 && !crossfadeTimer) {
                 crossfadeTimer = setTimeout(() => {
                     crossfadeTimer = null;
