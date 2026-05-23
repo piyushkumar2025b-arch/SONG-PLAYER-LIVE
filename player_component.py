@@ -657,6 +657,18 @@ def render_player_html(
         // 2. Initialize App
         document.addEventListener("DOMContentLoaded", () => {
             lucide.createIcons();
+            initWaveformCanvas();
+            // Inject crossfade button next to repeat
+            const repeatBtnInit = document.getElementById('repeat-btn');
+            if (repeatBtnInit && repeatBtnInit.parentNode) {
+                const xBtn = document.createElement('button');
+                xBtn.id = 'crossfade-btn';
+                xBtn.onclick = toggleCrossfade;
+                xBtn.title = 'Crossfade OFF';
+                xBtn.className = 'text-white/40 hover:text-white transition-colors';
+                xBtn.innerHTML = '<i data-lucide="arrow-right-left" class="w-4 h-4"></i>';
+                repeatBtnInit.parentNode.insertBefore(xBtn, repeatBtnInit.nextSibling);
+            }
             // If Python already has lyrics, show them immediately
             // Otherwise kick off client-side fetch right away (Python API calls are blocked server-side)
             if (lyricsData && lyricsData.length > 0) {
@@ -1373,6 +1385,7 @@ def render_player_html(
                 syncLyrics(curTime);
                 // Write current playback time so Karaoke Studio iframe can sync
                 try { localStorage.setItem('melodify_playback_time', curTime.toString()); } catch(e) {}
+                checkCrossfade();
             }, 100);
         }
         
@@ -1673,11 +1686,6 @@ def render_player_html(
             }
         }
         
-        function updateProgressBar(time) {
-            const progress = document.getElementById('progress-bar');
-            progress.value = time;
-            document.getElementById('time-current').innerText = formatTime(time);
-        }
         
         // 7. View Mode Toggling
         function togglePlayMode() {
@@ -1868,6 +1876,8 @@ def render_player_html(
             }
             
             syncLyricsNow();
+            // Repaint waveform scrubber with new theme colour
+            if (player) drawWaveformScrubber((player.getCurrentTime()||0) / (currentSongDuration||1));
         }
         
         function setEqualizerPreset(preset) {
@@ -2814,19 +2824,15 @@ def render_player_html(
         }
 
         // Hook into existing progress bar update to repaint waveform
-        const _origUpdateProgressBar = updateProgressBar;
         function updateProgressBar(time) {
-            _origUpdateProgressBar(time);
+            const progress = document.getElementById('progress-bar');
+            progress.value = time;
+            document.getElementById('time-current').innerText = formatTime(time);
             const dur = currentSongDuration || 1;
             drawWaveformScrubber(Math.min(1, time / dur));
         }
 
-        // Also update when theme changes
-        const _origSetTheme = setTheme;
-        function setTheme(name) {
-            _origSetTheme(name);
-            if (player) drawWaveformScrubber((player.getCurrentTime()||0) / (currentSongDuration||1));
-        }
+        // Also update when theme changes - handled inside setTheme directly
 
         // ── Beat detection via simulated amplitude peaks ───────────────────────
         function tickBeatDetection() {
@@ -2972,13 +2978,6 @@ def render_player_html(
             }
         }
 
-        // Hook into lyrics sync interval to also check crossfade
-        const _origStartSync = startLyricsSync;
-        function startLyricsSync() {
-            _origStartSync();
-            // also tick crossfade check
-        }
-
         // Add crossfade toggle button logic
         function toggleCrossfade() {
             crossfadeActive = !crossfadeActive;
@@ -2991,37 +2990,8 @@ def render_player_html(
             stStatusToast(crossfadeActive ? '⟶ Crossfade ON' : 'Crossfade OFF');
         }
 
-        // Patch the lyrics sync interval to include crossfade check
-        const _origStartLyricsSync = startLyricsSync;
-        let crossfadeCheckInterval = null;
-        function startLyricsSync() {
-            stopLyricsSync();
-            lyricsInterval = setInterval(() => {
-                if (!player) return;
-                const curTime = player.getCurrentTime();
-                updateProgressBar(curTime);
-                syncLyrics(curTime);
-                try { localStorage.setItem('melodify_playback_time', curTime.toString()); } catch(e) {}
-                checkCrossfade();
-            }, 100);
-        }
-
         // ── Init new features on DOMContentLoaded ─────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
-            initWaveformCanvas();
-            // Inject crossfade button next to repeat
-            const repeatBtn = document.getElementById('repeat-btn');
-            if (repeatBtn && repeatBtn.parentNode) {
-                const xBtn = document.createElement('button');
-                xBtn.id = 'crossfade-btn';
-                xBtn.onclick = toggleCrossfade;
-                xBtn.title = 'Crossfade OFF';
-                xBtn.className = 'text-white/40 hover:text-white transition-colors';
-                xBtn.innerHTML = '<i data-lucide="arrow-right-left" class="w-4 h-4"></i>';
-                repeatBtn.parentNode.insertBefore(xBtn, repeatBtn.nextSibling);
-                lucide.createIcons();
-            }
-        });
+        // (merged into the main DOMContentLoaded listener above)
     </script>
 </body>
 </html>"""

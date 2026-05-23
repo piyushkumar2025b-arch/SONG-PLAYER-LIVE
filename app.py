@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
 import json
 import re
@@ -812,7 +813,7 @@ if st.session_state.current_song:
         current_index=current_index
     )
     
-    st.iframe(player_html, height=620)
+    components.html(player_html, height=620)
     
     # 2. Sub-controls (Favorites, Playlists, Manual Search, Close player)
     ctrl_col1, ctrl_col2, ctrl_col3, ctrl_col4 = st.columns([1.5, 2.5, 3.5, 1])
@@ -2361,7 +2362,7 @@ elif choice == "🍃 Ambient Mixer":
     </body>
     </html>
     """
-    st.iframe(mixer_html, height=540)
+    components.html(mixer_html, height=540)
 
 # ----------------- VIEW 12: FOCUS ZONE -----------------
 elif choice == "🧘 Focus Zone":
@@ -2747,7 +2748,7 @@ elif choice == "🧘 Focus Zone":
     </body>
     </html>
     """
-    st.iframe(focus_html, height=450)
+    components.html(focus_html, height=450)
 
 # ----------------- VIEW 13: SONIC PERSONA ANALYST -----------------
 elif choice == "✨ Sonic Persona":
@@ -3175,7 +3176,7 @@ elif choice == "🎤 Vocal Coach":
         </body>
         </html>
         """
-        st.iframe(pitch_html, height=450)
+        components.html(pitch_html, height=450)
 
 
 # ═══════════════════════════ VIEW 15: VIRTUAL PIANO ═══════════════════════════
@@ -3299,7 +3300,7 @@ elif choice == "🎹 Virtual Piano":
     document.addEventListener('keydown',e=>{{const nk=km[e.key.toLowerCase()];if(nk&&!e.repeat){{const n=nk.slice(0,-1),o=parseInt(nk.slice(-1));play(n,o,null);}}}});
     document.addEventListener('keyup',e=>{{const nk=km[e.key.toLowerCase()];if(nk){{const n=nk.slice(0,-1),o=parseInt(nk.slice(-1));stop(n,o,null);}}}});
     </script></body></html>"""
-    st.iframe(piano_html, height=430)
+    components.html(piano_html, height=430)
 
 
 # ═══════════════════════════ VIEW 16: LIVE RADIO ═══════════════════════════
@@ -3369,7 +3370,7 @@ elif choice == "📻 Live Radio":
                 </div>
                 """, unsafe_allow_html=True)
                 if url_stream:
-                    st.iframe(f'<audio controls style="width:100%;height:38px;border-radius:8px;margin-bottom:10px;" preload="none"><source src="{url_stream}"></audio>', height=42)
+                    components.html(f'<audio controls style="width:100%;height:38px;border-radius:8px;margin-bottom:10px;" preload="none"><source src="{url_stream}"></audio>', height=42)
     else:
         st.markdown("""
         <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.25);">
@@ -3798,7 +3799,7 @@ elif choice == "🎯 Karaoke Studio":
         render(0);
         setInterval(tick,150);
         </script></body></html>"""
-        st.iframe(karaoke_html, height=490)
+        components.html(karaoke_html, height=490)
         if use_synced:
             st.success("🎤 Synced lyrics mode active — start the song above to see real-time karaoke!")
         else:
