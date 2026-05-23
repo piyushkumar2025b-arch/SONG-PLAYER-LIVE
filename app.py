@@ -99,6 +99,12 @@ if "weather_recs" not in st.session_state:
     st.session_state.weather_recs = None
 if "active_mood" not in st.session_state:
     st.session_state.active_mood = None
+if "music_dna" not in st.session_state:
+    st.session_state.music_dna = None
+if "trending_chart" not in st.session_state:
+    st.session_state.trending_chart = []
+if "trending_chart_name" not in st.session_state:
+    st.session_state.trending_chart_name = ""
 
 # Inject Custom CSS for Premium Design & Modern Typography
 st.markdown("""
@@ -524,6 +530,340 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# ── NEON UI ADDITIONS ─────────────────────────────────────────────────────────
+st.markdown("""
+<style>
+    /* ═══════════════════════════════════════════════════
+       NEON GLOW SYSTEM
+    ═══════════════════════════════════════════════════ */
+
+    /* Neon pink glow card */
+    .neon-card-pink {
+        background: rgba(8, 4, 18, 0.75);
+        border: 1px solid #f43f5e;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 0 12px rgba(244,63,94,0.35), inset 0 0 20px rgba(244,63,94,0.04);
+        transition: box-shadow 0.3s ease;
+    }
+    .neon-card-pink:hover {
+        box-shadow: 0 0 24px rgba(244,63,94,0.6), 0 0 48px rgba(244,63,94,0.2), inset 0 0 20px rgba(244,63,94,0.07);
+    }
+
+    /* Neon purple glow card */
+    .neon-card-purple {
+        background: rgba(8, 4, 18, 0.75);
+        border: 1px solid #a855f7;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 0 12px rgba(168,85,247,0.35), inset 0 0 20px rgba(168,85,247,0.04);
+        transition: box-shadow 0.3s ease;
+    }
+    .neon-card-purple:hover {
+        box-shadow: 0 0 24px rgba(168,85,247,0.6), 0 0 48px rgba(168,85,247,0.2), inset 0 0 20px rgba(168,85,247,0.07);
+    }
+
+    /* Neon cyan glow card */
+    .neon-card-cyan {
+        background: rgba(4, 12, 18, 0.75);
+        border: 1px solid #06b6d4;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 0 12px rgba(6,182,212,0.35), inset 0 0 20px rgba(6,182,212,0.04);
+        transition: box-shadow 0.3s ease;
+    }
+    .neon-card-cyan:hover {
+        box-shadow: 0 0 24px rgba(6,182,212,0.6), 0 0 48px rgba(6,182,212,0.2), inset 0 0 20px rgba(6,182,212,0.07);
+    }
+
+    /* Neon green glow card */
+    .neon-card-green {
+        background: rgba(4, 14, 8, 0.75);
+        border: 1px solid #22c55e;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 0 12px rgba(34,197,94,0.3), inset 0 0 20px rgba(34,197,94,0.03);
+        transition: box-shadow 0.3s ease;
+    }
+    .neon-card-green:hover {
+        box-shadow: 0 0 24px rgba(34,197,94,0.55), 0 0 48px rgba(34,197,94,0.18), inset 0 0 20px rgba(34,197,94,0.06);
+    }
+
+    /* Neon orange glow card */
+    .neon-card-orange {
+        background: rgba(14, 8, 4, 0.75);
+        border: 1px solid #f97316;
+        border-radius: 16px;
+        padding: 16px;
+        box-shadow: 0 0 12px rgba(249,115,22,0.3), inset 0 0 20px rgba(249,115,22,0.03);
+        transition: box-shadow 0.3s ease;
+    }
+    .neon-card-orange:hover {
+        box-shadow: 0 0 24px rgba(249,115,22,0.55), 0 0 48px rgba(249,115,22,0.18), inset 0 0 20px rgba(249,115,22,0.06);
+    }
+
+    /* Neon text styles */
+    .neon-text-pink {
+        color: #ff2d6b;
+        text-shadow: 0 0 8px rgba(255,45,107,0.8), 0 0 20px rgba(255,45,107,0.4);
+    }
+    .neon-text-purple {
+        color: #c084fc;
+        text-shadow: 0 0 8px rgba(192,132,252,0.8), 0 0 20px rgba(192,132,252,0.4);
+    }
+    .neon-text-cyan {
+        color: #22d3ee;
+        text-shadow: 0 0 8px rgba(34,211,238,0.8), 0 0 20px rgba(34,211,238,0.4);
+    }
+    .neon-text-green {
+        color: #4ade80;
+        text-shadow: 0 0 8px rgba(74,222,128,0.8), 0 0 20px rgba(74,222,128,0.4);
+    }
+
+    /* Neon heading with animated flicker */
+    .neon-heading {
+        font-size: 2rem;
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #ff2d6b 0%, #c084fc 50%, #22d3ee 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        filter: drop-shadow(0 0 8px rgba(244,63,94,0.5));
+        animation: neonFlicker 4s ease-in-out infinite;
+    }
+    @keyframes neonFlicker {
+        0%, 95%, 100% { filter: drop-shadow(0 0 8px rgba(244,63,94,0.5)); }
+        96% { filter: drop-shadow(0 0 2px rgba(244,63,94,0.1)); }
+        97% { filter: drop-shadow(0 0 10px rgba(244,63,94,0.7)); }
+        98% { filter: drop-shadow(0 0 3px rgba(244,63,94,0.2)); }
+    }
+
+    /* Neon divider line */
+    .neon-divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #f43f5e, #a855f7, #06b6d4, transparent);
+        border: none;
+        margin: 1.5rem 0;
+        box-shadow: 0 0 8px rgba(168,85,247,0.4);
+    }
+
+    /* Neon badge / tag */
+    .neon-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.05em;
+        text-transform: uppercase;
+    }
+    .neon-badge-pink {
+        background: rgba(244,63,94,0.1);
+        border: 1px solid #f43f5e;
+        color: #f43f5e;
+        box-shadow: 0 0 8px rgba(244,63,94,0.3);
+    }
+    .neon-badge-purple {
+        background: rgba(168,85,247,0.1);
+        border: 1px solid #a855f7;
+        color: #c084fc;
+        box-shadow: 0 0 8px rgba(168,85,247,0.3);
+    }
+    .neon-badge-cyan {
+        background: rgba(6,182,212,0.1);
+        border: 1px solid #06b6d4;
+        color: #22d3ee;
+        box-shadow: 0 0 8px rgba(6,182,212,0.3);
+    }
+    .neon-badge-green {
+        background: rgba(34,197,94,0.1);
+        border: 1px solid #22c55e;
+        color: #4ade80;
+        box-shadow: 0 0 8px rgba(34,197,94,0.3);
+    }
+
+    /* Neon pulsing ring avatar */
+    .neon-avatar {
+        border-radius: 50%;
+        box-shadow: 0 0 0 3px #f43f5e, 0 0 16px rgba(244,63,94,0.5);
+        animation: neonRingPulse 2s ease-in-out infinite;
+    }
+    @keyframes neonRingPulse {
+        0%, 100% { box-shadow: 0 0 0 3px #f43f5e, 0 0 16px rgba(244,63,94,0.5); }
+        50% { box-shadow: 0 0 0 5px #a855f7, 0 0 28px rgba(168,85,247,0.6); }
+    }
+
+    /* Neon progress bar */
+    .neon-progress-track {
+        background: rgba(255,255,255,0.04);
+        border-radius: 100px;
+        height: 6px;
+        overflow: visible;
+        position: relative;
+    }
+    .neon-progress-fill {
+        height: 100%;
+        border-radius: 100px;
+        background: linear-gradient(90deg, #f43f5e, #a855f7, #06b6d4);
+        box-shadow: 0 0 10px rgba(168,85,247,0.6), 0 0 20px rgba(244,63,94,0.3);
+        position: relative;
+    }
+    .neon-progress-fill::after {
+        content: '';
+        position: absolute;
+        right: -1px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 8px #a855f7, 0 0 16px #f43f5e;
+    }
+
+    /* Neon stat number */
+    .neon-stat-num {
+        font-size: 2.4rem;
+        font-weight: 900;
+        line-height: 1;
+    }
+
+    /* Neon scanline overlay (subtle CRT effect on cards) */
+    .neon-scanlines {
+        position: relative;
+        overflow: hidden;
+    }
+    .neon-scanlines::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0,0,0,0.03) 2px,
+            rgba(0,0,0,0.03) 4px
+        );
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    /* Neon grid background pattern for section headers */
+    .neon-grid-header {
+        background:
+            linear-gradient(rgba(244,63,94,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(244,63,94,0.04) 1px, transparent 1px),
+            linear-gradient(135deg, rgba(168,85,247,0.06) 0%, rgba(244,63,94,0.06) 100%);
+        background-size: 40px 40px, 40px 40px, 100% 100%;
+        border: 1px solid rgba(244,63,94,0.15);
+        border-radius: 18px;
+        padding: 18px 22px;
+        margin-bottom: 22px;
+        position: relative;
+    }
+    .neon-grid-header::before {
+        content: '';
+        position: absolute;
+        top: -1px; left: 20px; right: 20px; height: 1px;
+        background: linear-gradient(90deg, transparent, #f43f5e, #a855f7, transparent);
+        box-shadow: 0 0 8px rgba(168,85,247,0.5);
+    }
+
+    /* Neon song card enhancement */
+    .song-item-card:hover {
+        box-shadow: 0 0 16px rgba(244,63,94,0.25), 0 12px 32px -8px rgba(244,63,94,0.22) !important;
+    }
+
+    /* Neon sidebar now-playing glow */
+    [data-testid="stSidebar"] .stButton > button:hover {
+        box-shadow: 0 0 12px rgba(244,63,94,0.4) !important;
+    }
+
+    /* Neon active tab indicator */
+    .stTabs [aria-selected="true"] {
+        box-shadow: 0 0 10px rgba(244,63,94,0.3) !important;
+    }
+
+    /* Neon input focus glow */
+    .stTextInput>div>div>input:focus {
+        box-shadow: 0 0 0 2px rgba(244,63,94,0.15), 0 0 12px rgba(244,63,94,0.2) !important;
+    }
+
+    /* Neon button primary glow on hover */
+    .stButton > button:hover {
+        box-shadow: 0 0 14px rgba(244,63,94,0.3), 0 4px 16px -4px rgba(244,63,94,0.25) !important;
+    }
+
+    /* Neon colour sweep animation for section dividers */
+    .neon-sweep {
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, #f43f5e 25%, #a855f7 50%, #06b6d4 75%, transparent 100%);
+        background-size: 200% 100%;
+        animation: neonSweep 3s linear infinite;
+        border-radius: 2px;
+        margin: 1rem 0;
+    }
+    @keyframes neonSweep {
+        0% { background-position: 100% 0; }
+        100% { background-position: -100% 0; }
+    }
+
+    /* Neon glow on thumbnails */
+    .neon-thumb {
+        border-radius: 10px;
+        border: 1px solid rgba(168,85,247,0.4);
+        box-shadow: 0 0 10px rgba(168,85,247,0.25);
+    }
+
+    /* Equalizer bars — larger, neon version */
+    .eq-bar {
+        display: inline-block;
+        width: 4px;
+        border-radius: 3px;
+        background: linear-gradient(180deg, #22d3ee, #a855f7, #f43f5e);
+        box-shadow: 0 0 6px rgba(168,85,247,0.6);
+        animation: eqPulse 1s ease-in-out infinite;
+        margin: 0 1.5px;
+    }
+    .eq-bar:nth-child(1){height:10px;animation-delay:0s;}
+    .eq-bar:nth-child(2){height:18px;animation-delay:0.1s;}
+    .eq-bar:nth-child(3){height:14px;animation-delay:0.2s;}
+    .eq-bar:nth-child(4){height:22px;animation-delay:0.3s;}
+    .eq-bar:nth-child(5){height:10px;animation-delay:0.4s;}
+    .eq-bar:nth-child(6){height:16px;animation-delay:0.5s;}
+    .eq-bar:nth-child(7){height:20px;animation-delay:0.15s;}
+    @keyframes eqPulse {
+        0%,100%{transform:scaleY(0.4);opacity:0.7;}
+        50%{transform:scaleY(1);opacity:1;}
+    }
+
+    /* Neon floating particles bg (purely decorative CSS) */
+    .neon-particle-bg {
+        position: relative;
+    }
+    .neon-particle-bg::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+            radial-gradient(circle 2px at 15% 25%, rgba(244,63,94,0.5) 0%, transparent 100%),
+            radial-gradient(circle 2px at 85% 70%, rgba(168,85,247,0.5) 0%, transparent 100%),
+            radial-gradient(circle 2px at 50% 90%, rgba(6,182,212,0.5) 0%, transparent 100%),
+            radial-gradient(circle 1px at 30% 60%, rgba(34,197,94,0.4) 0%, transparent 100%),
+            radial-gradient(circle 1px at 70% 20%, rgba(249,115,22,0.4) 0%, transparent 100%);
+        pointer-events: none;
+        border-radius: inherit;
+        animation: particleDrift 6s ease-in-out infinite alternate;
+    }
+    @keyframes particleDrift {
+        0% { opacity: 0.4; transform: translateY(0); }
+        100% { opacity: 0.9; transform: translateY(-4px); }
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Helper Function: Clean Song Titles for Lyrics Query
 def clean_song_title(title: str) -> str:
     """Strip YouTube-style noise from song/artist names for better API matching."""
@@ -931,8 +1271,8 @@ with st.sidebar:
     
     choice = option_menu(
         menu_title=None,
-        options=["Search Songs", "Play Queue & AI Recommendations", "My Favorites", "Playlists", "Recent Plays", "AI Lyrics Syncer", "📊 Stats", "🌦️ Weather Radio", "💬 Sound Therapist", "🎸 Chord Finder", "🍃 Ambient Mixer", "🧘 Focus Zone", "✨ Sonic Persona", "🎤 Vocal Coach", "🎹 Virtual Piano", "📻 Live Radio", "🏆 Music Trivia", "🌍 World Music", "📝 Song Journal", "🎭 Mood Board", "🎯 Karaoke Studio", "🔬 Song Analyzer"],
-        icons=["search", "list-music", "heart-fill", "music-note-list", "clock-history", "robot", "bar-chart-fill", "cloud-sun-fill", "chat-left-heart-fill", "music-note-beamed", "wind", "hourglass-split", "stars", "mic-fill", "music-note", "broadcast", "trophy-fill", "globe2", "journal-text", "palette2", "camera-reels", "activity"],
+        options=["Search Songs", "Play Queue & AI Recommendations", "My Favorites", "Playlists", "Recent Plays", "AI Lyrics Syncer", "📊 Stats", "🌦️ Weather Radio", "💬 Sound Therapist", "🎸 Chord Finder", "🍃 Ambient Mixer", "🧘 Focus Zone", "✨ Sonic Persona", "🎤 Vocal Coach", "🎹 Virtual Piano", "📻 Live Radio", "🏆 Music Trivia", "🌍 World Music", "📝 Song Journal", "🎭 Mood Board", "🎯 Karaoke Studio", "🔬 Song Analyzer", "⚡ BPM Tap Tempo", "🎨 Neon Visualizer", "🧬 Music DNA", "🔥 Trending Now"],
+        icons=["search", "list-music", "heart-fill", "music-note-list", "clock-history", "robot", "bar-chart-fill", "cloud-sun-fill", "chat-left-heart-fill", "music-note-beamed", "wind", "hourglass-split", "stars", "mic-fill", "music-note", "broadcast", "trophy-fill", "globe2", "journal-text", "palette2", "camera-reels", "activity", "lightning-charge-fill", "brush-fill", "dna", "fire"],
         menu_icon="cast",
         default_index=0,
         styles={
@@ -4197,3 +4537,525 @@ elif choice == "🔬 Song Analyzer":
             <p>Enter any song above and click <strong>Run Analysis</strong> to get a deep musicology report.</p>
         </div>
         """, unsafe_allow_html=True)
+
+# ═══════════════════════════ VIEW 23: BPM TAP TEMPO ═══════════════════════════
+elif choice == "⚡ BPM Tap Tempo":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">⚡ BPM Tap Tempo & Key Calculator</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Tap the button to the beat to detect BPM. Transpose keys, calculate tempo divisions, and find matching metronome presets.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    bpm_html = """<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;900&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Outfit',sans-serif;background:transparent;color:#f3f4f6;padding:16px;overflow:hidden;}
+    .main{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .card{background:rgba(8,4,18,0.85);border-radius:18px;padding:22px;text-align:center;}
+    .card-pink{border:1px solid #f43f5e;box-shadow:0 0 16px rgba(244,63,94,0.3),inset 0 0 24px rgba(244,63,94,0.03);}
+    .card-purple{border:1px solid #a855f7;box-shadow:0 0 16px rgba(168,85,247,0.3),inset 0 0 24px rgba(168,85,247,0.03);}
+    .bpm-display{font-size:5rem;font-weight:900;line-height:1;
+        background:linear-gradient(135deg,#ff2d6b,#a855f7);
+        -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+        filter:drop-shadow(0 0 12px rgba(244,63,94,0.6));
+        margin:16px 0 8px 0;}
+    .bpm-label{font-size:0.7rem;text-transform:uppercase;letter-spacing:0.15em;color:rgba(255,255,255,0.3);margin-bottom:20px;}
+    .tap-btn{
+        width:140px;height:140px;border-radius:50%;cursor:pointer;
+        background:radial-gradient(circle,rgba(244,63,94,0.15),rgba(168,85,247,0.08));
+        border:2px solid #f43f5e;
+        box-shadow:0 0 20px rgba(244,63,94,0.4),0 0 40px rgba(244,63,94,0.15);
+        font-size:1rem;font-weight:700;color:#f43f5e;font-family:'Outfit',sans-serif;
+        transition:all 0.1s;display:flex;align-items:center;justify-content:center;
+        flex-direction:column;gap:4px;margin:0 auto 16px auto;
+    }
+    .tap-btn:active,.tap-btn.flash{
+        background:radial-gradient(circle,rgba(244,63,94,0.4),rgba(168,85,247,0.2));
+        box-shadow:0 0 40px rgba(244,63,94,0.8),0 0 80px rgba(244,63,94,0.3);
+        transform:scale(0.94);
+    }
+    .sub-btn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);
+        color:rgba(255,255,255,0.6);border-radius:10px;padding:8px 18px;
+        font-family:'Outfit',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.2s;margin:4px;}
+    .sub-btn:hover{background:rgba(168,85,247,0.15);border-color:#a855f7;color:#c084fc;box-shadow:0 0 10px rgba(168,85,247,0.3);}
+    .divisions{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px;}
+    .div-chip{background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);
+        border-radius:10px;padding:10px 6px;text-align:center;}
+    .div-chip .val{font-size:1.1rem;font-weight:700;color:#c084fc;text-shadow:0 0 8px rgba(192,132,252,0.5);}
+    .div-chip .lbl{font-size:0.6rem;color:rgba(255,255,255,0.35);margin-top:2px;}
+    .key-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px;}
+    .key-btn{background:rgba(6,182,212,0.06);border:1px solid rgba(6,182,212,0.2);
+        border-radius:10px;padding:10px 4px;text-align:center;cursor:pointer;transition:all 0.2s;font-family:'Outfit',sans-serif;}
+    .key-btn:hover{background:rgba(6,182,212,0.18);box-shadow:0 0 10px rgba(6,182,212,0.3);border-color:#06b6d4;}
+    .key-btn.active{background:rgba(6,182,212,0.25);border-color:#22d3ee;box-shadow:0 0 14px rgba(6,182,212,0.5);}
+    .key-btn .kn{font-size:1.1rem;font-weight:700;color:#22d3ee;text-shadow:0 0 8px rgba(34,211,238,0.5);}
+    .key-btn .km{font-size:0.6rem;color:rgba(255,255,255,0.3);}
+    h3{font-size:0.8rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.35);margin-bottom:12px;}
+    </style></head><body>
+    <div class="main">
+      <div class="card card-pink">
+        <h3>🥁 Tap Beat Detector</h3>
+        <div class="bpm-display" id="bpm">--</div>
+        <div class="bpm-label">Beats Per Minute</div>
+        <button class="tap-btn" id="tapBtn" onmousedown="tap()">
+          <span style="font-size:2rem;">🥁</span>
+          <span>TAP</span>
+        </button>
+        <div style="display:flex;justify-content:center;gap:8px;">
+          <button class="sub-btn" onclick="resetTaps()">↺ Reset</button>
+          <button class="sub-btn" id="metBtn" onclick="toggleMetronome()">🔔 Metronome</button>
+        </div>
+        <div class="divisions" id="divs" style="opacity:0.3;">
+          <div class="div-chip"><div class="val" id="d-whole">--</div><div class="lbl">Whole</div></div>
+          <div class="div-chip"><div class="val" id="d-half">--</div><div class="lbl">Half</div></div>
+          <div class="div-chip"><div class="val" id="d-quarter">--</div><div class="lbl">Quarter</div></div>
+          <div class="div-chip"><div class="val" id="d-8th">--</div><div class="lbl">8th</div></div>
+          <div class="div-chip"><div class="val" id="d-16th">--</div><div class="lbl">16th</div></div>
+          <div class="div-chip"><div class="val" id="d-triplet">--</div><div class="lbl">Triplet</div></div>
+        </div>
+      </div>
+      <div class="card card-purple">
+        <h3>🎵 Key & Scale Finder</h3>
+        <div class="key-grid" id="keyGrid"></div>
+        <div style="margin-top:16px;background:rgba(168,85,247,0.05);border:1px solid rgba(168,85,247,0.15);border-radius:12px;padding:14px;">
+          <p style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin:0 0 6px 0;text-transform:uppercase;letter-spacing:0.08em;">Relative & Parallel Keys</p>
+          <div id="relKeys" style="font-size:0.85rem;color:rgba(255,255,255,0.65);line-height:1.8;"></div>
+        </div>
+        <div style="margin-top:12px;background:rgba(6,182,212,0.04);border:1px solid rgba(6,182,212,0.12);border-radius:12px;padding:12px;">
+          <p style="font-size:0.72rem;color:rgba(255,255,255,0.35);margin:0 0 6px 0;text-transform:uppercase;letter-spacing:0.08em;">Common Chord Progression</p>
+          <div id="progDisplay" style="font-size:0.92rem;color:#22d3ee;text-shadow:0 0 8px rgba(34,211,238,0.4);letter-spacing:0.04em;"></div>
+        </div>
+      </div>
+    </div>
+    <script>
+    let taps=[],metInterval=null,metOn=false;
+    const audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+
+    function tap(){
+        const now=performance.now();
+        taps.push(now);
+        if(taps.length>8)taps.shift();
+        const btn=document.getElementById('tapBtn');
+        btn.classList.add('flash');
+        setTimeout(()=>btn.classList.remove('flash'),120);
+        if(taps.length>=2){
+            const intervals=[];
+            for(let i=1;i<taps.length;i++)intervals.push(taps[i]-taps[i-1]);
+            const avg=intervals.reduce((a,b)=>a+b,0)/intervals.length;
+            const bpm=Math.round(60000/avg);
+            document.getElementById('bpm').innerText=bpm;
+            const s=(60/bpm).toFixed(3);
+            document.getElementById('d-whole').innerText=(parseFloat(s)*4).toFixed(2)+'s';
+            document.getElementById('d-half').innerText=(parseFloat(s)*2).toFixed(2)+'s';
+            document.getElementById('d-quarter').innerText=parseFloat(s).toFixed(3)+'s';
+            document.getElementById('d-8th').innerText=(parseFloat(s)/2).toFixed(3)+'s';
+            document.getElementById('d-16th').innerText=(parseFloat(s)/4).toFixed(3)+'s';
+            document.getElementById('d-triplet').innerText=(parseFloat(s)*2/3).toFixed(3)+'s';
+            document.getElementById('divs').style.opacity='1';
+        }
+    }
+
+    function resetTaps(){taps=[];document.getElementById('bpm').innerText='--';document.getElementById('divs').style.opacity='0.3';}
+
+    function toggleMetronome(){
+        metOn=!metOn;
+        const btn=document.getElementById('metBtn');
+        if(metOn){
+            btn.style.color='#f43f5e';btn.style.borderColor='#f43f5e';btn.style.boxShadow='0 0 10px rgba(244,63,94,0.4)';
+            const bpmVal=parseInt(document.getElementById('bpm').innerText)||120;
+            const interval=60000/bpmVal;
+            function click(){
+                const o=audioCtx.createOscillator(),g=audioCtx.createGain();
+                o.frequency.value=880;o.type='sine';
+                g.gain.setValueAtTime(0.3,audioCtx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.001,audioCtx.currentTime+0.08);
+                o.connect(g);g.connect(audioCtx.destination);
+                o.start();o.stop(audioCtx.currentTime+0.08);
+            }
+            click();metInterval=setInterval(click,interval);
+        } else {
+            clearInterval(metInterval);
+            btn.style.color='';btn.style.borderColor='';btn.style.boxShadow='';
+        }
+    }
+
+    const keys=['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+    const relMinor={'C':'Am','G':'Em','D':'Bm','A':'F#m','E':'C#m','B':'G#m','F#':'D#m','C#':'A#m','F':'Dm','Bb':'Gm','Eb':'Cm','Ab':'Fm'};
+    const progs={'C':'C - Am - F - G','G':'G - Em - C - D','D':'D - Bm - G - A','A':'A - F#m - D - E','E':'E - C#m - A - B','F':'F - Dm - Bb - C','Bb':'Bb - Gm - Eb - F','Eb':'Eb - Cm - Ab - Bb','Ab':'Ab - Fm - Db - Eb'};
+    let selKey='C';
+    const kg=document.getElementById('keyGrid');
+    keys.forEach(k=>{
+        const b=document.createElement('div');b.className='key-btn'+(k===selKey?' active':'');
+        b.innerHTML=`<div class="kn">${k}</div><div class="km">Major</div>`;
+        b.onclick=()=>{selKey=k;document.querySelectorAll('.key-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');updateKey(k);};
+        kg.appendChild(b);
+    });
+    function updateKey(k){
+        const rel=relMinor[k]||'—';
+        document.getElementById('relKeys').innerHTML=`🔗 Relative Minor: <strong style="color:#c084fc;">${rel}</strong><br>🎵 Parallel Minor: <strong style="color:#06b6d4;">${k}m</strong><br>🔄 Dominant: <strong style="color:#f43f5e;">${keys[(keys.indexOf(k)+7)%12]}</strong>`;
+        document.getElementById('progDisplay').innerText=progs[k]||`${k} - ${k}m - IV - V`;
+    }
+    updateKey('C');
+    document.addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();tap();}});
+    </script></body></html>"""
+    components.html(bpm_html, height=540)
+    st.markdown("<div class='neon-sweep'></div>", unsafe_allow_html=True)
+    st.markdown("<p style='color:rgba(255,255,255,0.3);font-size:0.75rem;text-align:center;'>Press <strong>Space</strong> to tap on the beat · Metronome uses Web Audio API</p>", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 24: NEON VISUALIZER ═══════════════════════════
+elif choice == "🎨 Neon Visualizer":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🎨 Neon Audio Visualizer</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Five reactive neon visualizer modes powered by the Web Audio API — mic or oscillator input.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    viz_html = """<!DOCTYPE html><html><head><meta charset="UTF-8">
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&display=swap');
+    *{box-sizing:border-box;margin:0;padding:0;}
+    body{font-family:'Outfit',sans-serif;background:#060810;color:#f3f4f6;overflow:hidden;}
+    canvas{display:block;border-radius:16px;border:1px solid rgba(168,85,247,0.2);box-shadow:0 0 20px rgba(168,85,247,0.15);}
+    .controls{display:flex;gap:10px;flex-wrap:wrap;padding:12px 0 10px 0;align-items:center;}
+    .vbtn{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.6);
+        border-radius:10px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
+    .vbtn.active{background:rgba(168,85,247,0.15);border-color:#a855f7;color:#c084fc;box-shadow:0 0 10px rgba(168,85,247,0.3);}
+    .vbtn:hover:not(.active){background:rgba(255,255,255,0.08);}
+    .start-btn{background:linear-gradient(135deg,rgba(244,63,94,0.2),rgba(168,85,247,0.15));
+        border:1px solid #f43f5e;color:#fff;border-radius:12px;padding:10px 24px;
+        font-size:0.88rem;font-weight:700;cursor:pointer;font-family:'Outfit',sans-serif;
+        box-shadow:0 0 14px rgba(244,63,94,0.3);transition:all 0.2s;}
+    .start-btn:hover{box-shadow:0 0 24px rgba(244,63,94,0.5);}
+    .src-btn{background:rgba(6,182,212,0.08);border:1px solid rgba(6,182,212,0.25);color:#22d3ee;
+        border-radius:10px;padding:8px 16px;font-family:'Outfit',sans-serif;font-size:0.8rem;cursor:pointer;transition:all 0.2s;}
+    .src-btn.active{background:rgba(6,182,212,0.2);box-shadow:0 0 10px rgba(6,182,212,0.3);}
+    </style></head><body>
+    <div style="padding:12px;">
+      <div class="controls">
+        <button class="start-btn" id="startBtn" onclick="toggleViz()">▶ Start Visualizer</button>
+        <button class="src-btn active" id="srcMic" onclick="setSource('mic')">🎤 Microphone</button>
+        <button class="src-btn" id="srcOsc" onclick="setSource('osc')">〜 Oscillator</button>
+      </div>
+      <div class="controls" style="padding-top:0;">
+        <span style="font-size:0.7rem;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.08em;">Mode:</span>
+        <button class="vbtn active" id="m-bars" onclick="setMode('bars')">▮ Bars</button>
+        <button class="vbtn" id="m-wave" onclick="setMode('wave')">〜 Wave</button>
+        <button class="vbtn" id="m-circle" onclick="setMode('circle')">◉ Circular</button>
+        <button class="vbtn" id="m-stars" onclick="setMode('stars')">✦ Starfield</button>
+        <button class="vbtn" id="m-mirror" onclick="setMode('mirror')">⬡ Mirror</button>
+      </div>
+      <canvas id="viz" width="720" height="320"></canvas>
+    </div>
+    <script>
+    let audioCtx=null,analyser=null,source=null,osc=null,gainNode=null;
+    let running=false,animId=null,mode='bars',srcType='mic',stream=null;
+    const canvas=document.getElementById('viz');
+    const ctx=canvas.getContext('2d');
+    const W=720,H=320;
+
+    const palettes={
+        bars:['#ff2d6b','#f43f5e','#a855f7','#7c3aed','#06b6d4','#0891b2'],
+        wave:['#22d3ee','#06b6d4'],circle:['#a855f7','#f43f5e','#06b6d4'],
+        stars:['#fff','#c084fc','#f43f5e','#22d3ee'],mirror:['#f43f5e','#a855f7']
+    };
+
+    async function toggleViz(){
+        const btn=document.getElementById('startBtn');
+        if(running){running=false;cancelAnimationFrame(animId);ctx.clearRect(0,0,W,H);btn.innerText='▶ Start Visualizer';if(stream)stream.getTracks().forEach(t=>t.stop());if(osc)osc.stop();return;}
+        if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();
+        analyser=audioCtx.createAnalyser();analyser.fftSize=2048;
+        if(srcType==='mic'){
+            try{stream=await navigator.mediaDevices.getUserMedia({audio:true});source=audioCtx.createMediaStreamSource(stream);source.connect(analyser);}
+            catch(e){alert('Mic access denied. Switching to oscillator.');setSource('osc');return;}
+        } else {
+            osc=audioCtx.createOscillator();gainNode=audioCtx.createGain();gainNode.gain.value=0.01;
+            osc.type='sawtooth';osc.frequency.setValueAtTime(220,audioCtx.currentTime);
+            osc.connect(gainNode);gainNode.connect(analyser);analyser.connect(audioCtx.destination);
+            osc.start();
+        }
+        running=true;btn.innerText='⏹ Stop';draw();
+    }
+
+    function setMode(m){mode=m;document.querySelectorAll('.vbtn').forEach(b=>b.classList.remove('active'));document.getElementById('m-'+m).classList.add('active');}
+    function setSource(s){srcType=s;document.getElementById('srcMic').classList.toggle('active',s==='mic');document.getElementById('srcOsc').classList.toggle('active',s==='osc');}
+
+    function draw(){
+        animId=requestAnimationFrame(draw);
+        const buf=new Uint8Array(analyser.frequencyBinCount);
+        analyser.getByteFrequencyData(buf);
+        const tbuf=new Uint8Array(analyser.fftSize);
+        analyser.getByteTimeDomainData(tbuf);
+        ctx.fillStyle='rgba(6,8,16,0.25)';ctx.fillRect(0,0,W,H);
+
+        if(mode==='bars'){
+            const bw=W/128,gap=1;
+            for(let i=0;i<128;i++){
+                const v=buf[i*2]/255;
+                const h=v*H;
+                const grd=ctx.createLinearGradient(0,H-h,0,H);
+                grd.addColorStop(0,'#22d3ee');grd.addColorStop(0.5,'#a855f7');grd.addColorStop(1,'#f43f5e');
+                ctx.fillStyle=grd;
+                ctx.shadowBlur=8+v*12;ctx.shadowColor='rgba(168,85,247,0.8)';
+                ctx.fillRect(i*(bw+gap),H-h,bw,h);
+            }
+        } else if(mode==='wave'){
+            ctx.lineWidth=2;ctx.strokeStyle='#22d3ee';ctx.shadowBlur=12;ctx.shadowColor='rgba(34,211,238,0.7)';
+            ctx.beginPath();
+            const sl=W/tbuf.length;
+            for(let i=0;i<tbuf.length;i++){const y=(tbuf[i]/128)*H/2;i===0?ctx.moveTo(0,y):ctx.lineTo(i*sl,y);}
+            ctx.stroke();
+            ctx.strokeStyle='rgba(168,85,247,0.5)';ctx.shadowColor='rgba(168,85,247,0.5)';
+            ctx.beginPath();
+            for(let i=0;i<tbuf.length;i++){const y=H-(tbuf[i]/128)*H/2;i===0?ctx.moveTo(0,y):ctx.lineTo(i*sl,y);}
+            ctx.stroke();
+        } else if(mode==='circle'){
+            const cx=W/2,cy=H/2,r=90;
+            ctx.strokeStyle='rgba(168,85,247,0.1)';ctx.lineWidth=1;ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.stroke();
+            for(let i=0;i<360;i+=2){
+                const angle=(i/360)*Math.PI*2;
+                const v=buf[Math.floor(i/360*128)]/255;
+                const len=v*70;
+                ctx.strokeStyle=`hsl(${280+v*80},90%,${50+v*30}%)`;
+                ctx.shadowBlur=v*16;ctx.shadowColor=`hsl(${280+v*80},90%,60%)`;
+                ctx.lineWidth=1.5;ctx.beginPath();
+                ctx.moveTo(cx+Math.cos(angle)*r,cy+Math.sin(angle)*r);
+                ctx.lineTo(cx+Math.cos(angle)*(r+len),cy+Math.sin(angle)*(r+len));
+                ctx.stroke();
+            }
+        } else if(mode==='stars'){
+            if(!draw.stars){draw.stars=Array.from({length:80},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*2+0.5,spd:Math.random()*0.4+0.1}));}
+            const avg=buf.slice(0,64).reduce((a,b)=>a+b,0)/64/255;
+            draw.stars.forEach(s=>{
+                s.x-=s.spd*(1+avg*4);if(s.x<0)s.x=W;
+                const a=0.4+avg*0.6;
+                ctx.fillStyle=`rgba(${168+avg*80},${85+avg*50},${247},${a})`;
+                ctx.shadowBlur=4+avg*8;ctx.shadowColor='rgba(168,85,247,0.8)';
+                ctx.beginPath();ctx.arc(s.x,s.y,s.s*(1+avg),0,Math.PI*2);ctx.fill();
+            });
+        } else if(mode==='mirror'){
+            const cx=W/2;
+            for(let i=0;i<64;i++){
+                const v=buf[i*2]/255;const h=v*H/2;
+                const x=(i/64)*cx;
+                const grd=ctx.createLinearGradient(0,H/2-h,0,H/2);
+                grd.addColorStop(0,'#f43f5e');grd.addColorStop(1,'rgba(168,85,247,0.3)');
+                ctx.fillStyle=grd;ctx.shadowBlur=v*10;ctx.shadowColor='rgba(244,63,94,0.6)';
+                ctx.fillRect(cx-x-4,H/2-h,4,h);ctx.fillRect(cx+x,H/2-h,4,h);
+                ctx.fillRect(cx-x-4,H/2,4,h);ctx.fillRect(cx+x,H/2,4,h);
+            }
+        }
+        ctx.shadowBlur=0;
+    }
+    </script></body></html>"""
+    components.html(viz_html, height=510)
+
+
+# ═══════════════════════════ VIEW 25: MUSIC DNA ═══════════════════════════
+elif choice == "🧬 Music DNA":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🧬 My Music DNA Profile</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">Your listening data decoded into a visual audio genome — genre helix, emotion spectrum, and sonic fingerprint.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='text-align:center;padding:24px;'>⚠️ Add your Gemini API Key in the sidebar to generate your Music DNA.</div>", unsafe_allow_html=True)
+    else:
+        favs = db.get_favorites()
+        recents = db.get_recent_plays()
+        rated = db.get_all_ratings()
+
+        if not favs and not recents:
+            st.markdown("<div class='neon-card-purple' style='text-align:center;padding:24px;'>💡 Play and favorite some songs first, then come back to decode your Music DNA!</div>", unsafe_allow_html=True)
+        else:
+            if st.button("🧬 Decode My Music DNA", use_container_width=True):
+                fav_list = [f"{f['uploader']} - {f['title']}" for f in favs[:12]]
+                rec_list = [f"{r['uploader']} - {r['title']}" for r in recents[:12]]
+                rat_list = [f"{r['uploader']} - {r['title']} ({r['rating']}/5)" for r in rated[:8]]
+                with st.spinner("Sequencing your audio genome..."):
+                    url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                    prompt = f"""Analyze this music listener's DNA from their data:
+Favorites: {json.dumps(fav_list)}
+Recent plays: {json.dumps(rec_list)}
+Ratings: {json.dumps(rat_list)}
+Return ONLY valid JSON (no fences):
+{{"dna_name":"Creative musical archetype name","genome":[{{"trait":"Trait name","value":75,"color":"#f43f5e","desc":"Short description"}},...8],"genre_helix":[{{"genre":"Genre","pct":30}},...5],"emotion_map":[{{"emotion":"Joy","pct":40}},...6],"sonic_signature":"2-sentence poetic description","era_affinity":"Decade","tempo_soul":"Slow/Mid/Fast/Mixed","listening_style":"Immersive/Social/Background","top_instruments":["inst1","inst2","inst3"]}}"""
+                    try:
+                        res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=25)
+                        if res.status_code == 200:
+                            raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                            raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                            st.session_state.music_dna = json.loads(raw)
+                            st.rerun()
+                    except Exception as ex:
+                        st.error(f"Error: {ex}")
+
+        dna = st.session_state.get("music_dna")
+        if dna:
+            st.markdown(f"""
+            <div class="neon-card-purple neon-scanlines" style="text-align:center;margin-bottom:22px;">
+                <div style="font-size:0.7rem;color:rgba(255,255,255,0.3);text-transform:uppercase;letter-spacing:0.15em;margin-bottom:6px;">Your Sonic Archetype</div>
+                <div class="neon-text-purple" style="font-size:1.8rem;font-weight:800;">{dna.get('dna_name','')}</div>
+                <p style="color:rgba(255,255,255,0.5);font-size:0.88rem;margin:10px 0 0 0;font-style:italic;">{dna.get('sonic_signature','')}</p>
+                <div style="display:flex;justify-content:center;gap:16px;margin-top:14px;flex-wrap:wrap;">
+                    <span class="neon-badge neon-badge-cyan">🕐 {dna.get('era_affinity','')}</span>
+                    <span class="neon-badge neon-badge-pink">⏱ {dna.get('tempo_soul','')}</span>
+                    <span class="neon-badge neon-badge-green">🎧 {dna.get('listening_style','')}</span>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+            col_g, col_e = st.columns(2)
+            with col_g:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>🎵 Genre Helix</p>", unsafe_allow_html=True)
+                neon_cols = ["#f43f5e","#a855f7","#06b6d4","#22c55e","#f97316"]
+                for i, g in enumerate(dna.get("genre_helix", [])):
+                    col = neon_cols[i % len(neon_cols)]
+                    pct = g.get('pct', 0)
+                    st.markdown(f"""
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);">{g.get('genre','')}</span>
+                            <span style="font-size:0.82rem;color:{col};font-weight:700;">{pct}%</span>
+                        </div>
+                        <div class="neon-progress-track">
+                            <div class="neon-progress-fill" style="width:{pct}%;background:{col};box-shadow:0 0 8px {col}88;"></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            with col_e:
+                st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:10px;'>💠 Emotion Spectrum</p>", unsafe_allow_html=True)
+                for i, em in enumerate(dna.get("emotion_map", [])):
+                    col = neon_cols[i % len(neon_cols)]
+                    pct = em.get('pct', 0)
+                    st.markdown(f"""
+                    <div style="margin-bottom:10px;">
+                        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+                            <span style="font-size:0.82rem;color:rgba(255,255,255,0.7);">{em.get('emotion','')}</span>
+                            <span style="font-size:0.82rem;color:{col};font-weight:700;">{pct}%</span>
+                        </div>
+                        <div class="neon-progress-track">
+                            <div class="neon-progress-fill" style="width:{pct}%;background:{col};box-shadow:0 0 8px {col}88;"></div>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<div class='neon-sweep'></div>", unsafe_allow_html=True)
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin-bottom:12px;'>🎸 Genome Traits</p>", unsafe_allow_html=True)
+            genome = dna.get("genome", [])
+            gcols = st.columns(4)
+            for i, trait in enumerate(genome):
+                with gcols[i % 4]:
+                    val = trait.get('value', 50)
+                    col = trait.get('color', '#a855f7')
+                    st.markdown(f"""
+                    <div style="background:rgba(8,4,18,0.8);border:1px solid {col};border-radius:14px;padding:14px;text-align:center;margin-bottom:10px;box-shadow:0 0 10px {col}44;">
+                        <div style="font-size:1.6rem;font-weight:900;color:{col};text-shadow:0 0 12px {col};">{val}</div>
+                        <div style="font-size:0.68rem;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.06em;margin:4px 0 2px 0;">{trait.get('trait','')}</div>
+                        <div style="font-size:0.65rem;color:rgba(255,255,255,0.3);">{trait.get('desc','')}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+            st.markdown("<p style='font-size:0.7rem;text-transform:uppercase;letter-spacing:0.1em;color:rgba(255,255,255,0.3);margin:12px 0 8px 0;'>🎹 Top Instruments in Your DNA</p>", unsafe_allow_html=True)
+            inst_html = "".join(f"<span class='neon-badge neon-badge-purple' style='margin:3px;'>🎵 {ins}</span>" for ins in dna.get("top_instruments", []))
+            st.markdown(f"<div style='display:flex;flex-wrap:wrap;gap:4px;'>{inst_html}</div>", unsafe_allow_html=True)
+
+
+# ═══════════════════════════ VIEW 26: TRENDING NOW ═══════════════════════════
+elif choice == "🔥 Trending Now":
+    st.markdown("""
+    <div class="neon-grid-header neon-particle-bg">
+        <div class="neon-heading">🔥 Trending Now</div>
+        <p style="color:rgba(255,255,255,0.45);font-size:0.88rem;margin:6px 0 0 0;">AI-curated real-time charts: hottest tracks, rising artists, and viral moments across genres.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    if not st.session_state.gemini_key:
+        st.markdown("<div class='neon-card-pink' style='text-align:center;padding:24px;'>⚠️ Add your Gemini API Key to load trending charts.</div>", unsafe_allow_html=True)
+    else:
+        col_tc, col_tg = st.columns([2, 3])
+        with col_tc:
+            chart_type = st.selectbox("Chart", ["Global Hot 100", "Viral 50", "Rising Artists", "Throwback Hits", "Genre Spotlight"], key="trend_chart")
+        with col_tg:
+            trend_genre = st.selectbox("Genre Filter", ["All Genres", "Pop", "Hip-Hop", "Rock", "Electronic", "R&B", "K-Pop", "Latin", "Indie", "Metal", "Country", "Jazz"], key="trend_genre")
+
+        if st.button("🔥 Load Trending Chart", use_container_width=True, key="trend_load_btn"):
+            with st.spinner("Scanning the zeitgeist..."):
+                url_g = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key={st.session_state.gemini_key}"
+                prompt = f"""You are a music industry data analyst. Generate a realistic '{chart_type}' chart for '{trend_genre}' as of 2025.
+Return ONLY valid JSON array (no fences), 10 entries:
+[{{"rank":1,"title":"Song","artist":"Artist","genre":"Genre","trend":"up/down/new/stable","trend_pct":15,"hot_reason":"Why it's trending in one sentence","weeks_on_chart":3}}]"""
+                try:
+                    res = requests.post(url_g, json={"contents":[{"parts":[{"text":prompt}]}]}, headers={"Content-Type":"application/json"}, timeout=20)
+                    if res.status_code == 200:
+                        raw = res.json()['candidates'][0]['content']['parts'][0]['text'].strip()
+                        raw = re.sub(r'^```json\s*','',raw); raw = re.sub(r'\s*```$','',raw)
+                        st.session_state.trending_chart = json.loads(raw)
+                        st.session_state.trending_chart_name = f"{chart_type} — {trend_genre}"
+                        st.rerun()
+                except Exception as ex:
+                    st.error(f"Error: {ex}")
+
+        chart = st.session_state.get("trending_chart", [])
+        chart_name = st.session_state.get("trending_chart_name", "")
+        if chart:
+            st.markdown(f"""
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+                <div style="display:flex;align-items:flex-end;gap:2px;">
+                    <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                    <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                    <div class="eq-bar"></div>
+                </div>
+                <span style="font-size:0.75rem;font-weight:700;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.08em;">{chart_name}</span>
+            </div>
+            """, unsafe_allow_html=True)
+
+            for track in chart:
+                rank = track.get('rank', 0)
+                trend = track.get('trend', 'stable')
+                trend_icon = {"up": "🟢 ▲", "down": "🔴 ▼", "new": "⚡ NEW", "stable": "⬜ —"}.get(trend, "—")
+                trend_pct = track.get('trend_pct', 0)
+                weeks = track.get('weeks_on_chart', 1)
+                border_col = "#f43f5e" if rank <= 3 else ("rgba(168,85,247,0.4)" if rank <= 7 else "rgba(255,255,255,0.07)")
+                rank_glow = f"box-shadow:0 0 16px rgba(244,63,94,0.4);" if rank <= 3 else ""
+
+                card_cols = st.columns([0.6, 5, 2.5, 1.5])
+                with card_cols[0]:
+                    rank_color = "#fbbf24" if rank == 1 else ("#9ca3af" if rank == 2 else ("#b45309" if rank == 3 else "rgba(255,255,255,0.3)"))
+                    st.markdown(f"<div style='text-align:center;padding-top:8px;font-size:1.2rem;font-weight:900;color:{rank_color};text-shadow:0 0 8px {rank_color};'>#{rank}</div>", unsafe_allow_html=True)
+                with card_cols[1]:
+                    st.markdown(f"""
+                    <div style="background:rgba(8,4,18,0.7);border:1px solid {border_col};border-radius:12px;padding:10px 14px;{rank_glow}margin-bottom:4px;">
+                        <p style="font-weight:700;font-size:0.92rem;color:#fff;margin:0 0 2px 0;">{track.get('title','')}</p>
+                        <p style="font-size:0.75rem;color:rgba(255,255,255,0.5);margin:0 0 5px 0;">{track.get('artist','')} · <span style="color:rgba(168,85,247,0.7);">{track.get('genre','')}</span></p>
+                        <p style="font-size:0.7rem;font-style:italic;color:rgba(255,255,255,0.4);margin:0;">{track.get('hot_reason','')}</p>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with card_cols[2]:
+                    st.markdown(f"<div style='padding-top:6px;font-size:0.8rem;color:rgba(255,255,255,0.5);'>{trend_icon} <span style='font-size:0.72rem;'>{trend_pct}% · {weeks}w on chart</span></div>", unsafe_allow_html=True)
+                with card_cols[3]:
+                    st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+                    if st.button("▶️", key=f"trend_play_{rank}_{track.get('title','')[:8]}", help="Play", use_container_width=True):
+                        with st.spinner("Searching..."):
+                            res = yt.search_songs(f"{track.get('artist','')} {track.get('title','')}", max_results=1)
+                            if res:
+                                play_song(res[0])
+                            else:
+                                st.toast("Not found on YouTube")
+        else:
+            st.markdown("""
+            <div style="text-align:center;padding:60px 20px;color:rgba(255,255,255,0.25);">
+                <div style="display:flex;justify-content:center;align-items:flex-end;gap:4px;margin-bottom:20px;height:48px;">
+                    <div class="eq-bar" style="height:20px;"></div><div class="eq-bar" style="height:36px;"></div>
+                    <div class="eq-bar" style="height:28px;"></div><div class="eq-bar" style="height:44px;"></div>
+                    <div class="eq-bar" style="height:22px;"></div><div class="eq-bar" style="height:38px;"></div>
+                </div>
+                <p style="font-size:1rem;">Select a chart type and click <strong>Load Trending Chart</strong></p>
+            </div>
+            """, unsafe_allow_html=True)
